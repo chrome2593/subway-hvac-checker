@@ -17,9 +17,9 @@ const CONFIG = {
         "default": { s: 9, ue: 0.5, le: 0.5 }
     },
 
-    // [공기청정기 기준]
+    // [공기청정기 기준 업데이트]
     AIR_PURIFIER_STD: 17,      
-    AIR_PURIFIER_LIMIT: 14,    // 14시간 이상이면 정상, 미만이면 확인필요
+    AIR_PURIFIER_LIMIT: 14,    // 14시간 이상이면 무조건 '정상' (이전: 확인필요)
 
     L1_STATIONS_PURIFIER: [
         "대곡", "진천", "월배", "상인", "월촌", "송현", "서부정류장", "대명", "안지랑", "현충로", 
