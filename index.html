@@ -29,7 +29,6 @@
         .card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
         .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; }
         
-        /* 테이블 스타일 */
         .table-container { background: white; border-radius: 16px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; text-align: center; min-width: 1300px; }
         th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid var(--border); font-size: 0.8rem; color: #64748b; }
@@ -38,7 +37,7 @@
         .badge { display: inline-block; padding: 5px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
         .badge-success { background-color: #def7ec; color: var(--success); }
         .badge-danger { background-color: #fde8e8; color: var(--danger); }
-        .bad-val { color: var(--danger); font-weight: 900; background: #fff5f5; border-radius: 6px; padding: 2px 6px; border: 1px solid #feb2b2; }
+        .bad-val { color: var(--danger); font-weight: 900; background: #fff5f5; border-radius: 4px; padding: 2px 6px; border: 1px solid #feb2b2; }
         .hidden { display: none; }
     </style>
 </head>
@@ -63,8 +62,8 @@
             </div>
             <div class="card">
                 <div class="upload-area" onclick="document.getElementById('excelFile').click()">
-                    <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">엑셀 일보 업로드</span>
-                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">±40분 오차 허용 (상부 1h / 하부 0.5h 기준)</p>
+                    <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">엑셀 파일 업로드</span>
+                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">2호선은 <strong>'장비'</strong> 시트 데이터를 자동으로 분석합니다.</p>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
                 </div>
             </div>
@@ -104,53 +103,65 @@
             const reader = new FileReader();
             reader.onload = (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                // [수정] "장비" 시트를 찾고 없으면 첫 번째 시트 사용
+                const sheetName = workbook.SheetNames.find(name => name.includes("장비")) || workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                
                 if(currentLine === 'line1') processLine1(sheet);
                 else processLine2(sheet);
             };
             reader.readAsBinaryString(file);
         });
 
-        // --- [2호선 수정: 키워드 포함 기반 검색] ---
+        // --- [2호선 수정: 접두어 및 공백 완벽 제거 로직] ---
         function processLine2(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const results = [];
             let currentData = null;
 
             for (let r = 0; r <= range.e.r; r++) {
-                // B, C, D열의 텍스트를 모두 합치고 공백 제거
-                let label = cleanText(getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2) + getCellValue(sheet, r, 3));
-                let value = getCellValue(sheet, r, 4); 
+                // B(1), C(2), D(3) 열을 합쳐서 이름 검색
+                let rawLabel = (getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2) + getCellValue(sheet, r, 3));
+                let cleanLabel = cleanText(rawLabel); // 모든 공백 제거
+                let value = getCellValue(sheet, r, 4); // E(4) 열 가동시간
 
-                // 역사 이름 찾기: "일일장비가동자료_강창" 안에 "강창"이 있는지 확인
-                const foundStation = LINE2_STATIONS.find(st => label.includes(st));
+                // 역사명 찾기 (접두어 무시하고 역사명이 포함되어 있는지 확인)
+                const foundStation = LINE2_STATIONS.find(st => cleanLabel.includes(st));
                 
                 if (foundStation) {
+                    // 새 역사를 찾으면 기존 수집하던 데이터 저장
                     if (currentData) results.push(formatRowL2(currentData));
                     currentData = { name: foundStation, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
                     continue;
                 }
 
+                // 현재 수집 중인 역사가 있을 때 장비 키워드 매칭
                 if (currentData) {
-                    // 키워드 매칭 (부분 일치 허용)
-                    if (label.includes("급기")) {
-                        if (label.includes("좌")) currentData.ls = value; else currentData.rs = value;
-                    } else if (label.includes("상부배기")) {
-                        if (label.includes("좌")) currentData.lue = value; else currentData.rue = value;
-                    } else if (label.includes("하부배기")) {
-                        if (label.includes("좌")) currentData.lle = value; else currentData.rle = value;
+                    if (cleanLabel.includes("급기")) {
+                        if (cleanLabel.includes("좌")) currentData.ls = value; else currentData.rs = value;
+                    } else if (cleanLabel.includes("상부배기")) {
+                        if (cleanLabel.includes("좌")) currentData.lue = value; else currentData.rue = value;
+                    } else if (cleanLabel.includes("하부배기")) {
+                        if (cleanLabel.includes("좌")) currentData.lle = value; else currentData.rle = value;
                     }
                 }
             }
+            // 마지막 역사 저장
             if (currentData) results.push(formatRowL2(currentData));
-            renderTableL2(results);
+            
+            if (results.length === 0) {
+                document.getElementById('resultTable').innerHTML = "<p style='padding:20px; text-align:center; color:red;'>데이터를 찾을 수 없습니다. '장비' 시트의 양식을 확인해 주세요.</p>";
+            } else {
+                renderTableL2(results);
+            }
         }
 
         function formatRowL2(d) {
             const type = STATION_TYPES[d.name] || "default";
             const target = RULES[type];
             const check = (val, goal) => {
-                if(!val || val === '0' || val === '-') return true; 
+                if(!val || val === '0' || val === '-' || val === '') return true; 
                 let h = parseToHours(val);
                 return (h >= goal - TOLERANCE) && (h <= goal + TOLERANCE);
             };
