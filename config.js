@@ -5,7 +5,6 @@ const CONFIG = {
     },
     TOLERANCE: 40 / 60, 
 
-    // [승강장 공조기 기준]
     RULES_NORMAL: {
         "type1": { s: 17, ue: 1, le: 0.5 },
         "type2": { s: 15, ue: 1, le: 0.5 },
@@ -19,8 +18,8 @@ const CONFIG = {
     },
 
     // [공기청정기 기준]
-    AIR_PURIFIER_STD: 17,      // 목표 가동시간
-    AIR_PURIFIER_LIMIT: 14,    // 14시간 미만 가동 시 '확인 필요'
+    AIR_PURIFIER_STD: 17,      
+    AIR_PURIFIER_LIMIT: 14,    
 
     L1_STATIONS_PURIFIER: [
         "대곡", "진천", "월배", "상인", "월촌", "송현", "서부정류장", "대명", "안지랑", "현충로", 
