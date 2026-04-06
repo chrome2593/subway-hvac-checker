@@ -10,8 +10,9 @@
 <body>
     <div id="home-view" class="hero-view">
         <div class="hero-content">
-            <div class="dtro-logo">DTRO</div>
+            <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; opacity: 0.8;">DAEGU TRANSPORTATION CORP.</div>
             <h1>승강장 공조 가동 현황<br>자동 점검 시스템</h1>
+            <p style="margin-bottom: 40px; opacity: 0.9;">가동일보 엑셀 분석 및 스케줄 자동 판정 솔루션</p>
             <button class="main-start-btn" onclick="showApp()">시스템 시작하기</button>
         </div>
     </div>
@@ -30,13 +31,14 @@
             </div>
 
             <div id="main-content" class="hidden">
-                <div id="season-banner" class="season-info"></div>
-                <div class="upload-section">
+                <div id="season-banner"></div>
+                <div class="upload-section" onclick="document.getElementById('excelFile').click()">
                     <input type="file" id="excelFile" hidden />
-                    <div class="drop-zone" onclick="document.getElementById('excelFile').click()">
-                        <p>엑셀 파일을 선택하거나 이 영역으로 드래그하세요</p>
-                    </div>
+                    <div style="font-size: 3rem; margin-bottom: 15px;">📊</div>
+                    <p style="font-size: 1.1rem; font-weight: bold;">엑셀 파일을 선택하거나 드래그하세요</p>
+                    <p style="color: #888; font-size: 0.9rem; margin-top: 10px;">파일 이름에 날짜(YYYYMMDD)가 포함되어야 합니다.</p>
                 </div>
+                
                 <div id="summary-area"></div>
                 <div id="full-list-area"></div>
             </div>
