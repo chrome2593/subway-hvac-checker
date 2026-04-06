@@ -6,7 +6,7 @@ function showApp() {
 }
 
 function goBack() {
-    location.reload(); // 즉시 메인으로 새로고침
+    location.reload(); 
 }
 
 document.getElementById('excelFile').addEventListener('change', function(e) {
@@ -14,19 +14,21 @@ document.getElementById('excelFile').addEventListener('change', function(e) {
     if(!file) return;
     currentFileName = file.name;
     
-    // [자동 호선 감지 로직]
     if (currentFileName.includes("일보")) {
         currentLine = 'line2';
-        document.getElementById('line-indicator').innerText = '🟢 2호선 가동일보 분석 중';
+        document.getElementById('line-indicator').innerText = '🟢 2호선 가동일보 분석';
     } else {
         currentLine = 'line1';
-        document.getElementById('line-indicator').innerText = '🔵 1호선 가동일보 분석 중';
+        document.getElementById('line-indicator').innerText = '🔵 1호선 가동일보 분석';
     }
 
     const reader = new FileReader();
     reader.onload = (evt) => {
         currentWorkbook = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
         runIntegratedAnalysis(currentWorkbook);
+        
+        // [추가] 업로드 박스 축소
+        document.getElementById('upload-container').classList.add('minimized');
     };
     reader.readAsBinaryString(file);
 });
@@ -35,7 +37,6 @@ function runIntegratedAnalysis(wb) {
     let dateKey = currentFileName.replace(/[^0-9]/g, "").substring(0, 8);
     let m = parseInt(dateKey.substring(4, 6)), d = parseInt(dateKey.substring(6, 8));
     
-    // 날짜 감지 실패 시 엑셀 내부 셀 확인
     if(isNaN(m) || m === 0) {
         const testSheet = wb.Sheets[wb.SheetNames[0]];
         const dv = testSheet['C2'] ? testSheet['C2'].v : null;
@@ -57,26 +58,7 @@ function runIntegratedAnalysis(wb) {
     renderAll(hvacData, airData);
 }
 
-// 판정 로직
-function analyze(val, target, station, type, isAir = false) {
-    if (station === "문양") return { s: 'ok', c: '' };
-    if (!val || val === '0' || val === '-' || val === '') return { s: 'critical', c: 'critical-val' };
-    const h = parseH(val);
-    if (isAir) {
-        if (h <= target * 0.5) return { s: 'critical', c: 'critical-val' };
-        if (h >= CONFIG.AIR_PURIFIER_LIMIT) return { s: 'ok', c: '' };
-        return { s: 'warning', c: 'bad-val' };
-    }
-    if (type === 'exhaust') {
-        if (h >= 0.5) return { s: 'ok', c: '' }; 
-        if (h <= 0.25) return { s: 'critical', c: 'critical-val' }; 
-        return { s: 'warning', c: 'bad-val' };
-    }
-    if (h <= target * 0.5) return { s: 'critical', c: 'critical-val' };
-    return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
-}
-
-// 렌더링
+// 렌더링 엔진 (심각 항목 상세 현시)
 function renderAll(hvac, air) {
     const hvacCri = hvac.filter(d => d.isCri);
     const airCri = air.filter(d => d.isCri);
@@ -108,7 +90,24 @@ function renderAll(hvac, air) {
     document.getElementById('full-list-area').innerHTML = fullHtml;
 }
 
-// 시간 포맷터
+// 판정 및 헬퍼 함수 (기존 로직 유지)
+function analyze(val, target, station, type, isAir = false) {
+    if (station === "문양") return { s: 'ok', c: '' };
+    if (!val || val === '0' || val === '-' || val === '') return { s: 'critical', c: 'critical-val' };
+    const h = parseH(val);
+    if (isAir) {
+        if (h <= target * 0.5) return { s: 'critical', c: 'critical-val' };
+        if (h >= CONFIG.AIR_PURIFIER_LIMIT) return { s: 'ok', c: '' };
+        return { s: 'warning', c: 'bad-val' };
+    }
+    if (type === 'exhaust') {
+        if (h >= 0.5) return { s: 'ok', c: '' }; 
+        if (h <= 0.25) return { s: 'critical', c: 'critical-val' }; 
+        return { s: 'warning', c: 'bad-val' };
+    }
+    if (h <= target * 0.5) return { s: 'critical', c: 'critical-val' };
+    return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
+}
 function formatToHMS(val) {
     if (!val || val === '0' || val === 0 || val === '-') return "0:00:00";
     let totalSeconds;
@@ -126,7 +125,6 @@ function formatToHMS(val) {
     const s = totalSeconds % 60;
     return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
-
 function buildHVACTable(data) {
     const headers = currentLine === 'line1' ? ['역사명', '시점급기', '시점배기', '종점급기', '종점배기', '판정'] : ['역사명', '시점급기', '시점상부', '시점하부', '종점급기', '종점상부', '종점하부', '판정'];
     let h = `<div class="table-wrapper"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
@@ -137,7 +135,6 @@ function buildHVACTable(data) {
     });
     return h + `</tbody></table></div>`;
 }
-
 function buildAirTable(data) {
     let h = `<div class="table-wrapper"><table><thead><tr><th style="width:140px;">역사명</th><th>상세 가동 현황</th><th style="width:100px;">판정</th></tr></thead><tbody>`;
     data.forEach(d => {
@@ -147,8 +144,6 @@ function buildAirTable(data) {
     });
     return h + `</tbody></table></div>`;
 }
-
-// 추출 헬퍼 (기존 유지)
 function getL1HVAC(sheet) {
     const data = []; const rules = isCooling ? CONFIG.RULES_COOLING : CONFIG.RULES_NORMAL;
     [4, 5].forEach(col => { let name = (col === 4) ? "설화명곡" : "화원"; data.push(getL1HVAC_Obj(sheet, name, col, 81, 82, 89, 90, rules)); });
@@ -217,7 +212,6 @@ function getAirPurifierData(sheet) {
     }
     return data;
 }
-
 function getL1HVAC_Obj(sheet, n, c, ls, le, rs, re, rules) {
     const type = CONFIG.STATION_MAP[n] || "default"; const target = rules[type] || rules["default"];
     const raw = [getCV(sheet, ls, c), getCV(sheet, le, c), getCV(sheet, rs, c), getCV(sheet, re, c)];
