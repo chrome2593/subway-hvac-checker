@@ -7,77 +7,105 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
-            --primary-color: #0054a6;
-            --bg-color: #f4f7fa;
-            --card-bg: #ffffff;
-            --text-main: #2d3748;
-            --text-muted: #718096;
-            --success: #38a169;
-            --danger: #e53e3e;
-            --border-color: #e2e8f0;
+            --line1-color: #d93d3d; --line2-color: #00aa4c; --primary-blue: #0054a6;
+            --bg-color: #f4f7fa; --card-bg: #ffffff; --text-main: #2d3748;
         }
-
         body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
-        .container { max-width: 1300px; margin: 0 auto; }
+        .container { max-width: 1500px; margin: 0 auto; }
 
-        header { margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
-        header h1 { font-size: 1.5rem; margin: 0; color: var(--primary-color); letter-spacing: -0.5px; }
+        /* 메인 메뉴 */
+        #main-menu { display: flex; gap: 30px; justify-content: center; align-items: center; min-height: 70vh; flex-wrap: wrap; }
+        .menu-card { 
+            background: white; width: 280px; padding: 40px 20px; border-radius: 20px; text-align: center; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; border-bottom: 8px solid #ccc;
+        }
+        .menu-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .menu-card.line1 { border-color: var(--line1-color); }
+        .menu-card.line2 { border-color: var(--line2-color); }
 
-        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .upload-area { border: 2px dashed var(--border-color); border-radius: 10px; padding: 40px; text-align: center; transition: all 0.3s ease; cursor: pointer; }
-        .upload-area:hover { border-color: var(--primary-color); background-color: #f0f7ff; }
-        #excelFile { display: none; }
-        .custom-file-upload { background-color: var(--primary-color); color: white; padding: 10px 24px; border-radius: 6px; display: inline-block; font-weight: 600; cursor: pointer; }
-
-        .table-container { overflow-x: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        table { width: 100%; border-collapse: collapse; text-align: center; }
-        th { background-color: #f8fafc; color: var(--text-main); font-weight: 600; padding: 16px; border-bottom: 2px solid var(--border-color); font-size: 0.9rem; }
-        td { padding: 14px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
-        tr:hover { background-color: #fcfdfe; }
+        /* 앱 실행 화면 */
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #ddd; }
+        .back-btn { cursor: pointer; padding: 8px 15px; background: #eee; border-radius: 5px; font-weight: bold; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .upload-area { border: 2px dashed #cbd5e0; border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; }
         
-        .st-name { font-weight: 700; color: var(--primary-color); background-color: #f0f7ff; width: 150px; }
-        .ext-station { background-color: #fffaf0; } /* 연장구간 강조색 */
-
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
-        .badge-success { background-color: #def7ec; color: var(--success); }
-        .badge-danger { background-color: #fde8e8; color: var(--danger); }
-        .bad-val { color: var(--danger); font-weight: bold; background: #fff5f5; border-radius: 4px; padding: 2px 4px; }
-        .rules-info { margin-top: 10px; font-size: 0.8rem; color: var(--text-muted); }
+        /* 테이블 */
+        .table-container { background: white; border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; text-align: center; min-width: 1200px; }
+        th { background-color: #f8fafc; padding: 12px; border-bottom: 2px solid #e2e8f0; font-size: 0.8rem; white-space: nowrap; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; }
+        .st-name { font-weight: bold; color: var(--primary-blue); background-color: #f0f7ff; position: sticky; left: 0; z-index: 10; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .badge-success { background-color: #def7ec; color: #38a169; }
+        .badge-danger { background-color: #fde8e8; color: #e53e3e; }
+        .bad-val { color: #e53e3e; font-weight: bold; background: #fff5f5; border-radius: 4px; padding: 2px 4px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🟦 승강장 공조기 가동 점검 (연장구간 포함)</h1>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">대구교통공사 기계 분야 운영관리</div>
-        </header>
-
-        <div class="card">
-            <div class="upload-area" onclick="document.getElementById('excelFile').click()">
-                <label for="excelFile" class="custom-file-upload">일보 파일 업로드</label>
-                <p>파일을 클릭하거나 이 영역에 드롭하세요</p>
-                <div class="rules-info">※ 판정 기준: ±40분 오차 허용 (시점: 좌측 / 종점: 우측)</div>
-                <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        <div id="main-menu">
+            <div class="menu-card line1" onclick="showView('line1')">
+                <h2 style="color:var(--line1-color)">1</h2>
+                <p>1호선 승강장 공조기</p>
+            </div>
+            <div class="menu-card line2" onclick="showView('line2')">
+                <h2 style="color:var(--line2-color)">2</h2>
+                <p>2호선 승강장 공조기</p>
             </div>
         </div>
 
-        <div id="resultTable" class="table-container"></div>
+        <div id="app-view" class="hidden">
+            <div class="nav-header">
+                <div class="back-btn" onclick="goHome()">← 처음으로</div>
+                <h1 id="view-title" style="margin:0; font-size:1.3rem; color:var(--primary-blue);"></h1>
+                <div style="width:80px;"></div>
+            </div>
+
+            <div class="card">
+                <div class="upload-area" onclick="document.getElementById('excelFile').click()">
+                    <span style="background:var(--primary-blue); color:white; padding:10px 20px; border-radius:6px; font-weight:bold;">파일 업로드</span>
+                    <p id="upload-guide" style="margin-top:15px; color:#666; font-size:0.9rem;"></p>
+                    <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
+                </div>
+            </div>
+            <div id="resultTable" class="table-container"></div>
+        </div>
     </div>
 
     <script>
-        const RULES = {
-            "type1": { s: 17, e: 1 }, "type2": { s: 15, e: 1 },
-            "type3": { s: 15.5, e: 1 }, "default": { s: 16.5, e: 1 }
-        };
+        let currentLine = '';
         const TOLERANCE = 40 / 60; 
 
-        // 역사별 유형 매핑 (공백 없이 작성)
-        const STATION_TYPES = {
-            "명덕": "type1", "청라언덕": "type1", "반월당(2)": "type1",
-            "현충로": "type2", "중앙로": "type2", "안심": "type2", 
-            "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2",
-            "반월당(1)": "type3", "설화명곡": "default", "화원": "default"
+        // [공통 기준 데이터]
+        const RULES = { 
+            "type1": { s: 17, ue: 1, le: 0.5 }, 
+            "type2": { s: 15, ue: 1, le: 0.5 }, 
+            "type3": { s: 15.5, ue: 1, le: 0.5 }, 
+            "default": { s: 16.5, ue: 1, le: 0.5 } 
         };
+        
+        const STATION_TYPES = {
+            "명덕": "type1", "청라언덕": "type1", "반월당": "type1",
+            "현충로": "type2", "중앙로": "type2", "안심": "type2", "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2",
+        };
+
+        const LINE2_STATIONS = ["다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", " 사월", "정평", "임당", "영남대"];
+
+        function showView(line) {
+            currentLine = line;
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검' : '2호선 점검 (상/하부 배기 분리)';
+            document.getElementById('upload-guide').innerText = `엑셀 파일을 선택하세요. (오차 ±40분 허용)`;
+            document.getElementById('resultTable').innerHTML = '';
+        }
+
+        function goHome() {
+            document.getElementById('main-menu').classList.remove('hidden');
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('excelFile').value = '';
+        }
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -85,84 +113,119 @@
             const reader = new FileReader();
             reader.onload = (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-                processData(workbook.Sheets[workbook.SheetNames[0]]);
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                if(currentLine === 'line1') processLine1(sheet);
+                else processLine2(sheet);
             };
             reader.readAsBinaryString(file);
         });
 
+        // --- [1호선 로직] ---
+        function processLine1(sheet) {
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            const rows = [];
+            [4, 5].forEach(col => {
+                rows.push(extractRowL1(sheet, (col===4?"설화명곡":"화원"), col, 81, 82, 89, 90));
+            });
+            for (let col = 4; col <= range.e.c; col++) {
+                let name = cleanText(getCellValue(sheet, 0, col));
+                if (!name || ['합계','명곡','화원'].includes(name)) continue;
+                rows.push(extractRowL1(sheet, name, col, 5, 6, 13, 14));
+            }
+            renderTableL1(rows);
+        }
+
+        // --- [2호선 로직: 키워드 기반 정밀 추출] ---
+        function processLine2(sheet) {
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            const results = [];
+            
+            for (let r = 0; r <= range.e.r; r++) {
+                let cellVal = cleanText(getCellValue(sheet, r, 2) || getCellValue(sheet, r, 3)); 
+                
+                if (LINE2_STATIONS.includes(cellVal)) {
+                    let stationData = { name: cellVal, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
+                    
+                    // 해당 역사 이름 발견 지점부터 다음 25행 내에서 키워드 검색
+                    for(let i=1; i<=25; i++) {
+                        let rowLabel = cleanText(getCellValue(sheet, r+i, 2) || getCellValue(sheet, r+i, 3));
+                        let val = getCellValue(sheet, r+i, 4); // E열(4) 데이터
+                        
+                        if(rowLabel.includes("좌승강_급기")) stationData.ls = val;
+                        else if(rowLabel.includes("좌승강_상부배기")) stationData.lue = val;
+                        else if(rowLabel.includes("좌승강_하부배기")) stationData.lle = val;
+                        else if(rowLabel.includes("우승강_급기")) stationData.rs = val;
+                        else if(rowLabel.includes("우승강_상부배기")) stationData.rue = val;
+                        else if(rowLabel.includes("우승강_하부배기")) stationData.rle = val;
+                    }
+                    results.push(formatRowL2(stationData));
+                }
+            }
+            renderTableL2(results);
+        }
+
+        function formatRowL2(d) {
+            const type = STATION_TYPES[d.name] || "default";
+            const target = RULES[type];
+            
+            const check = (val, goal) => {
+                if(!val) return true; // 장비가 없으면 통과로 처리
+                let h = parseToHours(val);
+                return (h >= goal - TOLERANCE) && (h <= goal + TOLERANCE);
+            };
+
+            const pass = [
+                check(d.ls, target.s), check(d.lue, target.ue), check(d.lle, target.le),
+                check(d.rs, target.s), check(d.rue, target.ue), check(d.rle, target.le)
+            ];
+            const isAll = pass.every(p => p);
+
+            return `<tr><td class="st-name">${d.name}</td>
+                <td style="font-size:0.7rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>
+                <td class="${pass[0]?'':'bad-val'}">${d.ls||'-'}</td>
+                <td class="${pass[1]?'':'bad-val'}">${d.lue||'-'}</td>
+                <td class="${pass[2]?'':'bad-val'}">${d.lle||'-'}</td>
+                <td class="${pass[3]?'':'bad-val'}">${d.rs||'-'}</td>
+                <td class="${pass[4]?'':'bad-val'}">${d.rue||'-'}</td>
+                <td class="${pass[5]?'':'bad-val'}">${d.rle||'-'}</td>
+                <td><span class="badge ${isAll?'badge-success':'badge-danger'}">${isAll?'정상':'확인필요'}</span></td></tr>`;
+        }
+
+        function renderTableL2(rows) {
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr>
+                <th>역사명</th><th>기준(h)</th>
+                <th>시점급기</th><th>시점상부</th><th>시점하부</th>
+                <th>종점급기</th><th>종점상부</th><th>종점하부</th>
+                <th>최종판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+        }
+
+        // --- 공통 헬퍼 함수 ---
+        function getCellValue(sheet, row, col) {
+            const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})];
+            return cell ? cell.w || cell.v : "";
+        }
         const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
         const parseToHours = (val) => {
-            if (!val) return 0;
-            if (typeof val === 'number') return val * 24; 
-            const parts = String(val).split(':');
-            return parts.length < 2 ? (parseFloat(val) || 0) : (parseInt(parts[0]) + (parseInt(parts[1]) / 60));
+            if(!val) return 0;
+            if(typeof val === 'number') return val * 24;
+            const p = String(val).split(':');
+            return p.length < 2 ? parseFloat(val)||0 : parseInt(p[0]) + (parseInt(p[1])/60);
         };
-        const checkRange = (value, target) => (value >= target - TOLERANCE) && (value <= target + TOLERANCE);
 
-        function processData(sheet) {
-            const range = XLSX.utils.decode_range(sheet['!ref']);
-            let html = `<table><thead>
-                <tr>
-                    <th>역사명</th>
-                    <th>기준(급/배)</th>
-                    <th>시점 급기(좌)</th>
-                    <th>시점 배기(좌)</th>
-                    <th>종점 급기(우)</th>
-                    <th>종점 배기(우)</th>
-                    <th>최종 판정</th>
-                </tr></thead><tbody>`;
-
-            const results = [];
-
-            // 1. 연장 구간 (설화명곡, 화원) 먼저 추출
-            // 설화명곡(명곡): E열(4), 화원: F열(5)
-            // 승강장 급기 시작: 82행(81) -> 배기: 83행(82) / 우측 급기: 90행(89) -> 배기: 91행(90)
-            const extCols = [4, 5];
-            extCols.forEach(col => {
-                let name = (col === 4) ? "설화명곡" : "화원";
-                results.push(extractRowData(sheet, name, col, 81, 82, 89, 90, true));
-            });
-
-            // 2. 나머지 역사 (대곡 ~ 안심) 추출
-            for (let col = 4; col <= range.e.c; col++) {
-                let rawName = cleanText(getCellValue(sheet, 0, col));
-                if (!rawName || rawName === '합계' || rawName === '명곡' || rawName === '화원') continue;
-                results.push(extractRowData(sheet, rawName, col, 5, 6, 13, 14, false));
-            }
-
-            results.forEach(res => { html += res; });
-            html += `</tbody></table>`;
-            document.getElementById('resultTable').innerHTML = html;
-        }
-
-        function extractRowData(sheet, name, col, lsR, leR, rsR, reR, isExt) {
+        // 1호선용 (기존 유지)
+        function extractRowL1(sheet, name, col, lsR, leR, rsR, reR) {
             const type = STATION_TYPES[name] || "default";
-            const target = RULES[type];
-            const rawVals = [
-                getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col),
-                getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)
-            ];
-            const v = rawVals.map(rv => parseToHours(rv));
-            const pass = [
-                checkRange(v[0], target.s), checkRange(v[1], target.e),
-                checkRange(v[2], target.s), checkRange(v[3], target.e)
-            ];
-            const isAllPass = pass.every(p => p);
-
-            return `<tr class="${isExt ? 'ext-station' : ''}">
-                <td class="st-name">${name}</td>
-                <td style="color:var(--text-muted); font-size:0.8rem;">급 ${target.s}h / 배 ${target.e}h</td>
-                <td class="${pass[0] ? '' : 'bad-val'}">${rawVals[0] || '0'}</td>
-                <td class="${pass[1] ? '' : 'bad-val'}">${rawVals[1] || '0'}</td>
-                <td class="${pass[2] ? '' : 'bad-val'}">${rawVals[2] || '0'}</td>
-                <td class="${pass[3] ? '' : 'bad-val'}">${rawVals[3] || '0'}</td>
-                <td><span class="badge ${isAllPass ? 'badge-success' : 'badge-danger'}">${isAllPass ? '정상' : '확인필요'}</span></td>
-            </tr>`;
+            const target = {s: RULES[type].s, e: RULES[type].ue}; // 1호선은 상부배기 기준(1h) 사용
+            const raw = [getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col), getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)];
+            const v = raw.map(rv => parseToHours(rv));
+            const pass = v.map((val, i) => i%2===0 ? (val >= target.s-TOLERANCE && val <= target.s+TOLERANCE) : (val >= target.e-TOLERANCE && val <= target.e+TOLERANCE));
+            const isAll = pass.every(p => p);
+            return `<tr><td class="st-name">${name}</td><td style="font-size:0.75rem;color:#777">급${target.s}/배${target.e}</td>` + 
+                   raw.map((r, i) => `<td class="${pass[i]?'':'bad-val'}">${r||'0'}</td>`).join('') +
+                   `<td><span class="badge ${isAll?'badge-success':'badge-danger'}">${isAll?'정상':'확인필요'}</span></td></tr>`;
         }
-
-        function getCellValue(sheet, row, col) {
-            const cell = sheet[XLSX.utils.encode_cell({ r: row, c: col })];
-            return cell ? cell.w || cell.v : null;
+        function renderTableL1(rows) {
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
     </script>
 </body>
