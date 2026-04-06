@@ -2,43 +2,80 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>승강장 공조기 점검 - 대구교통공사</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>승강장 공조기 점검 시스템 | 대구교통공사</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h2 { color: #1a3a5a; border-left: 6px solid #0054a6; padding-left: 15px; margin-bottom: 25px; }
-        .upload-section { margin-bottom: 30px; padding: 40px; border: 3px dashed #cbd5e0; text-align: center; background: #f8fafc; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th, td { border: 1px solid #e2e8f0; padding: 12px 8px; text-align: center; }
-        th { background-color: #1a3a5a; color: white; position: sticky; top: 0; }
-        .bad-cell { color: #e53e3e; font-weight: bold; background-color: #fff5f5; } /* 오차 범위 밖 */
-        .match-text { color: #38a169; font-weight: bold; }
-        .fail-text { color: #e53e3e; font-weight: bold; }
-        .st-name { font-weight: bold; background: #edf2f7; width: 120px; }
-        .info-text { font-size: 0.85em; color: #666; margin-top: 5px; }
+        :root {
+            --primary-color: #0054a6; /* 대구교통공사 메인 로고색 느낌 */
+            --bg-color: #f4f7fa;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --border-color: #e2e8f0;
+        }
+
+        body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* 헤더 디자인 */
+        header { margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        header h1 { font-size: 1.5rem; margin: 0; color: var(--primary-color); letter-spacing: -0.5px; }
+        .info-tag { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* 업로드 카드 */
+        .card { background: var(--card-bg); border-radius: 12px; shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .upload-area { border: 2px dashed var(--border-color); border-radius: 10px; padding: 40px; text-align: center; transition: all 0.3s ease; cursor: pointer; }
+        .upload-area:hover { border-color: var(--primary-color); background-color: #f0f7ff; }
+        .upload-area p { margin: 10px 0 0; color: var(--text-muted); font-size: 1rem; }
+        #excelFile { display: none; }
+        .custom-file-upload { background-color: var(--primary-color); color: white; padding: 10px 24px; border-radius: 6px; display: inline-block; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .custom-file-upload:hover { background-color: #003d7a; }
+
+        /* 테이블 디자인 */
+        .table-container { overflow-x: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background-color: #f8fafc; color: var(--text-main); font-weight: 600; padding: 16px; border-bottom: 2px solid var(--border-color); font-size: 0.9rem; }
+        td { padding: 14px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+        tr:hover { background-color: #fcfdfe; }
+        .st-name { font-weight: 700; color: var(--primary-color); }
+
+        /* 판정 배지 */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        .badge-success { background-color: #def7ec; color: var(--success); }
+        .badge-danger { background-color: #fde8e8; color: var(--danger); }
+        .bad-val { color: var(--danger); font-weight: bold; background: #fff5f5; border-radius: 4px; padding: 2px 4px; }
+
+        .rules-info { margin-top: 10px; font-size: 0.8rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>승강장 공조기 가동 실적 자동 점검</h2>
-        <div class="info-text">※ 모든 기준값에 대해 <strong>±40분</strong>의 오차 범위를 허용합니다.</div>
-        <div class="upload-section">
-            <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        <header>
+            <h1>🟦 승강장 공조기 가동 실적 자동 점검</h1>
+            <div class="info-tag">대구교통공사 기계 분야 운영관리용</div>
+        </header>
+
+        <div class="card">
+            <div class="upload-area" onclick="document.getElementById('excelFile').click()">
+                <label for="excelFile" class="custom-file-upload">파일 선택하기</label>
+                <p>또는 엑셀 파일을 이 영역으로 드래그하세요</p>
+                <div class="rules-info">※ 판정 기준: 역사별 설정값 대비 ±40분 오차 허용</div>
+                <input type="file" id="excelFile" accept=".xlsx, .xls" />
+            </div>
         </div>
-        <div id="resultTable"></div>
+
+        <div id="resultTable" class="table-container">
+            </div>
     </div>
 
     <script>
-        // 1. 기준 설정
         const RULES = {
-            "type1": { s: 17, e: 1 },    // 17h / 1h
-            "type2": { s: 15, e: 1 },    // 15h / 1h
-            "type3": { s: 15.5, e: 1 },  // 15.5h / 1h
-            "default": { s: 16.5, e: 1 }  // 16.5h / 1h
+            "type1": { s: 17, e: 1 }, "type2": { s: 15, e: 1 },
+            "type3": { s: 15.5, e: 1 }, "default": { s: 16.5, e: 1 }
         };
-
-        // 2. 오차 범위 설정 (40분 = 40/60 시간)
         const TOLERANCE = 40 / 60; 
 
         const STATION_TYPES = {
@@ -50,6 +87,7 @@
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
@@ -59,69 +97,53 @@
         });
 
         const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
-        
-        function parseToHours(val) {
+        const parseToHours = (val) => {
             if (!val) return 0;
             if (typeof val === 'number') return val * 24; 
             const parts = String(val).split(':');
-            if (parts.length < 2) return parseFloat(val) || 0;
-            return parseInt(parts[0]) + (parseInt(parts[1]) / 60);
-        }
-
-        // 판정 함수: 기준값 대비 +-TOLERANCE 이내인지 확인
-        function checkRange(value, target) {
-            return (value >= target - TOLERANCE) && (value <= target + TOLERANCE);
-        }
+            return parts.length < 2 ? (parseFloat(val) || 0) : (parseInt(parts[0]) + (parseInt(parts[1]) / 60));
+        };
+        const checkRange = (value, target) => (value >= target - TOLERANCE) && (value <= target + TOLERANCE);
 
         function processData(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
-            let html = `<table>
+            let html = `<table><thead>
                 <tr>
                     <th>역사명</th>
-                    <th>기준(급/배)</th>
+                    <th>판정기준</th>
                     <th>시점 급기(좌)</th>
                     <th>시점 배기(좌)</th>
                     <th>종점 급기(우)</th>
                     <th>종점 배기(우)</th>
                     <th>최종 판정</th>
-                </tr>`;
+                </tr></thead><tbody>`;
 
             for (let col = 4; col <= range.e.c; col++) {
                 let rawName = getCellValue(sheet, 0, col);
                 if (!rawName || rawName === '합 계') continue;
 
-                const washedName = cleanText(rawName);
-                const type = STATION_TYPES[washedName] || "default";
+                const type = STATION_TYPES[cleanText(rawName)] || "default";
                 const target = RULES[type];
+                const rawVals = [getCellValue(sheet, 5, col), getCellValue(sheet, 6, col), getCellValue(sheet, 13, col), getCellValue(sheet, 14, col)];
+                const v = rawVals.map(rv => parseToHours(rv));
 
-                const v = {
-                    ls: parseToHours(getCellValue(sheet, 5, col)),
-                    le: parseToHours(getCellValue(sheet, 6, col)),
-                    rs: parseToHours(getCellValue(sheet, 13, col)),
-                    re: parseToHours(getCellValue(sheet, 14, col))
-                };
-
-                // 오차 범위를 반영한 개별 항목 통과 여부
-                const pass = {
-                    ls: checkRange(v.ls, target.s),
-                    le: checkRange(v.le, target.e),
-                    rs: checkRange(v.rs, target.s),
-                    re: checkRange(v.re, target.e)
-                };
-                
-                const isAllPass = pass.ls && pass.le && pass.rs && pass.re;
+                const pass = [
+                    checkRange(v[0], target.s), checkRange(v[1], target.e),
+                    checkRange(v[2], target.s), checkRange(v[3], target.e)
+                ];
+                const isAllPass = pass.every(p => p);
 
                 html += `<tr>
                     <td class="st-name">${rawName}</td>
-                    <td style="color:#666">${target.s}h / ${target.e}h <br>(±40m)</td>
-                    <td class="${pass.ls ? '' : 'bad-cell'}">${getCellValue(sheet, 5, col) || '0'}</td>
-                    <td class="${pass.le ? '' : 'bad-cell'}">${getCellValue(sheet, 6, col) || '0'}</td>
-                    <td class="${pass.rs ? '' : 'bad-cell'}">${getCellValue(sheet, 13, col) || '0'}</td>
-                    <td class="${pass.re ? '' : 'bad-cell'}">${getCellValue(sheet, 14, col) || '0'}</td>
-                    <td class="${isAllPass ? 'match-text' : 'fail-text'}">${isAllPass ? '● 정상' : 'X 미달'}</td>
+                    <td style="color:var(--text-muted); font-size:0.8rem;">급 ${target.s}h / 배 ${target.e}h</td>
+                    <td class="${pass[0] ? '' : 'bad-val'}">${rawVals[0] || '0'}</td>
+                    <td class="${pass[1] ? '' : 'bad-val'}">${rawVals[1] || '0'}</td>
+                    <td class="${pass[2] ? '' : 'bad-val'}">${rawVals[2] || '0'}</td>
+                    <td class="${pass[3] ? '' : 'bad-val'}">${rawVals[3] || '0'}</td>
+                    <td><span class="badge ${isAllPass ? 'badge-success' : 'badge-danger'}">${isAllPass ? '정상' : '확인필요'}</span></td>
                 </tr>`;
             }
-            html += `</table>`;
+            html += `</tbody></table>`;
             document.getElementById('resultTable').innerHTML = html;
         }
 
