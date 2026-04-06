@@ -2,64 +2,64 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>승강장 공조기 점검 시스템 - 대구교통공사</title>
+    <title>승강장 공조기 점검 - 대구교통공사</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
         .container { max-width: 1400px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         h2 { color: #1a3a5a; border-left: 6px solid #0054a6; padding-left: 15px; margin-bottom: 25px; }
-        .upload-section { margin-bottom: 30px; padding: 40px; border: 3px dashed #cbd5e0; text-align: center; background: #f8fafc; border-radius: 10px; transition: 0.3s; }
-        .upload-section:hover { border-color: #0054a6; background: #eff6ff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .upload-section { margin-bottom: 30px; padding: 40px; border: 3px dashed #cbd5e0; text-align: center; background: #f8fafc; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
         th, td { border: 1px solid #e2e8f0; padding: 12px 8px; text-align: center; }
-        th { background-color: #1a3a5a; color: white; position: sticky; top: 0; font-weight: 500; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        .mismatch { background-color: #fff5f5 !important; color: #e53e3e; font-weight: bold; }
-        .match { color: #38a169; font-weight: bold; }
-        .st-name { font-weight: bold; color: #2d3748; background: #edf2f7; width: 120px; }
-        .info-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; background: #e2e8f0; color: #4a5568; }
+        th { background-color: #1a3a5a; color: white; position: sticky; top: 0; }
+        .bad-cell { color: #e53e3e; font-weight: bold; background-color: #fff5f5; } /* 오차 범위 밖 */
+        .match-text { color: #38a169; font-weight: bold; }
+        .fail-text { color: #e53e3e; font-weight: bold; }
+        .st-name { font-weight: bold; background: #edf2f7; width: 120px; }
+        .info-text { font-size: 0.85em; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>승강장 공조기 가동 실적 자동 점검</h2>
+        <div class="info-text">※ 모든 기준값에 대해 <strong>±40분</strong>의 오차 범위를 허용합니다.</div>
         <div class="upload-section">
-            <p style="margin-bottom: 15px; font-weight: bold;">일보 엑셀 파일을 여기에 업로드하세요</p>
             <input type="file" id="excelFile" accept=".xlsx, .xls" />
         </div>
         <div id="resultTable"></div>
     </div>
 
     <script>
-        // --- [기준 스케줄 및 역사 매핑] ---
+        // 1. 기준 설정
         const RULES = {
-            "type1": { s: 17, e: 1 },    // 1번 유형
-            "type2": { s: 15, e: 1 },    // 2번 유형
-            "type3": { s: 15.5, e: 1 },  // 3번 유형
-            "default": { s: 16.5, e: 1 }  // 4번 유형 (나머지)
+            "type1": { s: 17, e: 1 },    // 17h / 1h
+            "type2": { s: 15, e: 1 },    // 15h / 1h
+            "type3": { s: 15.5, e: 1 },  // 15.5h / 1h
+            "default": { s: 16.5, e: 1 }  // 16.5h / 1h
         };
 
-        // 역사명에서 공백을 제거한 상태로 매핑 리스트 작성
+        // 2. 오차 범위 설정 (40분 = 40/60 시간)
+        const TOLERANCE = 40 / 60; 
+
         const STATION_TYPES = {
-            "명덕": "type1", "청라언덕": "type1", "반월당(2호선)": "type1",
+            "명덕": "type1", "청라언덕": "type1", "반월당(2)": "type1",
             "현충로": "type2", "중앙로": "type2", "안심": "type2", 
             "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2",
-            "반월당(1호선)": "type3"
+            "반월당(1)": "type3"
         };
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
                 processData(workbook.Sheets[workbook.SheetNames[0]]);
             };
             reader.readAsBinaryString(file);
         });
 
-        // 공백 제거 도우미 함수
         const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
-
+        
         function parseToHours(val) {
             if (!val) return 0;
             if (typeof val === 'number') return val * 24; 
@@ -68,16 +68,21 @@
             return parseInt(parts[0]) + (parseInt(parts[1]) / 60);
         }
 
+        // 판정 함수: 기준값 대비 +-TOLERANCE 이내인지 확인
+        function checkRange(value, target) {
+            return (value >= target - TOLERANCE) && (value <= target + TOLERANCE);
+        }
+
         function processData(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             let html = `<table>
                 <tr>
                     <th>역사명</th>
                     <th>기준(급/배)</th>
-                    <th>좌측 급기</th>
-                    <th>좌측 배기</th>
-                    <th>우측 급기</th>
-                    <th>우측 배기</th>
+                    <th>시점 급기(좌)</th>
+                    <th>시점 배기(좌)</th>
+                    <th>종점 급기(우)</th>
+                    <th>종점 배기(우)</th>
                     <th>최종 판정</th>
                 </tr>`;
 
@@ -85,31 +90,35 @@
                 let rawName = getCellValue(sheet, 0, col);
                 if (!rawName || rawName === '합 계') continue;
 
-                // [핵심] 읽어온 역사명의 공백을 완전히 제거
                 const washedName = cleanText(rawName);
-                
-                // 기준값 찾기 (매핑 리스트에 없으면 기본값 적용)
                 const type = STATION_TYPES[washedName] || "default";
                 const target = RULES[type];
 
-                const vals = {
+                const v = {
                     ls: parseToHours(getCellValue(sheet, 5, col)),
                     le: parseToHours(getCellValue(sheet, 6, col)),
                     rs: parseToHours(getCellValue(sheet, 13, col)),
                     re: parseToHours(getCellValue(sheet, 14, col))
                 };
 
-                const isSuccess = (vals.ls >= target.s && vals.rs >= target.s && vals.le >= target.e && vals.re >= target.e);
-                const rowClass = isSuccess ? "" : "mismatch";
+                // 오차 범위를 반영한 개별 항목 통과 여부
+                const pass = {
+                    ls: checkRange(v.ls, target.s),
+                    le: checkRange(v.le, target.e),
+                    rs: checkRange(v.rs, target.s),
+                    re: checkRange(v.re, target.e)
+                };
+                
+                const isAllPass = pass.ls && pass.le && pass.rs && pass.re;
 
-                html += `<tr class="${rowClass}">
-                    <td class="st-name">${rawName} <br><span class="info-badge">${type === 'default' ? '일반' : '특수'}</span></td>
-                    <td style="color:#666">${target.s}h / ${target.e}h</td>
-                    <td>${getCellValue(sheet, 5, col) || '0'}</td>
-                    <td>${getCellValue(sheet, 6, col) || '0'}</td>
-                    <td>${getCellValue(sheet, 13, col) || '0'}</td>
-                    <td>${getCellValue(sheet, 14, col) || '0'}</td>
-                    <td class="${isSuccess ? 'match' : ''}">${isSuccess ? '● 정상' : 'X 미달'}</td>
+                html += `<tr>
+                    <td class="st-name">${rawName}</td>
+                    <td style="color:#666">${target.s}h / ${target.e}h <br>(±40m)</td>
+                    <td class="${pass.ls ? '' : 'bad-cell'}">${getCellValue(sheet, 5, col) || '0'}</td>
+                    <td class="${pass.le ? '' : 'bad-cell'}">${getCellValue(sheet, 6, col) || '0'}</td>
+                    <td class="${pass.rs ? '' : 'bad-cell'}">${getCellValue(sheet, 13, col) || '0'}</td>
+                    <td class="${pass.re ? '' : 'bad-cell'}">${getCellValue(sheet, 14, col) || '0'}</td>
+                    <td class="${isAllPass ? 'match-text' : 'fail-text'}">${isAllPass ? '● 정상' : 'X 미달'}</td>
                 </tr>`;
             }
             html += `</table>`;
