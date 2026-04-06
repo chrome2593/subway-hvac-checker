@@ -17,7 +17,6 @@ const CONFIG = {
         "default": { s: 9, ue: 0.5, le: 0.5 }
     },
 
-    // [공기청정기] 14시간 이상이면 정상
     AIR_PURIFIER_STD: 17,      
     AIR_PURIFIER_LIMIT: 14,    
 
