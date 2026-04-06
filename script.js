@@ -1,4 +1,4 @@
-let currentLine = '', currentTab = 'hvac', isCooling = false, currentWorkbook = null;
+let currentLine = '', currentTab = 'hvac', isCooling = false, currentWorkbook = null, currentFileName = '';
 
 function showApp() { document.getElementById('home-view').classList.add('hidden'); document.getElementById('app-view').classList.remove('hidden'); }
 function showHome() { location.reload(); }
@@ -6,38 +6,40 @@ function showHome() { location.reload(); }
 function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    if (currentWorkbook) processFile(currentWorkbook);
+    event.currentTarget.classList.add('active');
+    if (currentWorkbook) runAnalysis(currentWorkbook);
 }
 
 function selectLine(line) {
     currentLine = line;
     document.getElementById('line-selector').classList.add('hidden');
     document.getElementById('main-content').classList.remove('hidden');
-    document.getElementById('line-indicator').innerText = line === 'line1' ? '1호선 운영 점검' : '2호선 운영 점검';
+    document.getElementById('line-indicator').innerText = line === 'line1' ? '🔵 1호선 운영 점검' : '🟢 2호선 운영 점검';
 }
 
 document.getElementById('excelFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
+    if(!file) return;
+    currentFileName = file.name;
     const reader = new FileReader();
     reader.onload = (evt) => {
         currentWorkbook = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
-        
-        let dateKey = file.name.replace(/[^0-9]/g, "").substring(0, 8);
-        let m = parseInt(dateKey.substring(4, 6)), d = parseInt(dateKey.substring(6, 8));
-        isCooling = (m === 7 || m === 8 || (m === 9 && d <= 20));
-        
-        const banner = document.getElementById('season-banner');
-        banner.style.display = 'block';
-        banner.className = `season-info ${isCooling ? 'cooling-active' : 'normal-active'}`;
-        banner.innerHTML = `<strong>${isCooling ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'}</strong> 기준 적용 (${m}월 ${d}일)`;
-
-        processFile(currentWorkbook);
+        runAnalysis(currentWorkbook);
     };
     reader.readAsBinaryString(file);
 });
 
-function processFile(wb) {
+function runAnalysis(wb) {
+    // 날짜 감지 및 배너 업데이트
+    let dateKey = currentFileName.replace(/[^0-9]/g, "").substring(0, 8);
+    let m = parseInt(dateKey.substring(4, 6)), d = parseInt(dateKey.substring(6, 8));
+    isCooling = (m === 7 || m === 8 || (m === 9 && d <= 20));
+    
+    const banner = document.getElementById('season-banner');
+    banner.style.display = 'block';
+    banner.className = `season-info ${isCooling ? 'cooling-active' : 'normal-active'}`;
+    banner.innerHTML = `<strong>${isCooling ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'}</strong> 기준 적용 (${m || '?'}월 ${d || '?'}일 기준)`;
+
     if (currentTab === 'hvac') {
         const sheet = wb.Sheets[wb.SheetNames.find(n => n.includes("장비")) || wb.SheetNames[0]];
         currentLine === 'line1' ? processL1(sheet) : processL2(sheet);
@@ -47,36 +49,49 @@ function processFile(wb) {
     }
 }
 
-// --- 공기청정기 전용 로직 ---
+// --- [공용 판정 도우미] ---
+function analyze(val, target, station, type) {
+    if (station === "문양") return { s: 'ok', c: '' };
+    if (!val || val === '0' || val === '-') return { s: 'critical', c: 'critical-val' };
+    const h = parseH(val);
+
+    if (type === 'exhaust') {
+        if (h >= 0.5) return { s: 'ok', c: '' }; // 30분 이상 OK
+        if (h <= 0.25) return { s: 'critical', c: 'critical-val' }; // 15분 이하 심각
+        return { s: 'warning', c: 'bad-val' };
+    }
+    // 공기청정기 및 공조기 급기
+    if (h <= target * 0.5) return { s: 'critical', c: 'critical-val' };
+    return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
+}
+
+// --- [공기청정기 추출 및 판정] ---
 function processAirPurifier(sheet) {
     const range = XLSX.utils.decode_range(sheet['!ref']);
     const data = [];
     let curStation = "";
 
     for (let r = 0; r <= range.e.r; r++) {
-        let label = getCV(sheet, r, 1) || getCV(sheet, r, 0); // 역사명 혹은 기기번호
+        let label = getCV(sheet, r, 1) || getCV(sheet, r, 0);
         let cleanLabel = String(label).replace(/\s+/g, '');
-        let val = getCV(sheet, r, 4); // 가동시간 (E열)
+        let val = getCV(sheet, r, 4);
 
-        // 1. 역사명 감지 (통합본 양식 기준)
         if (cleanLabel.includes("가동자료_")) {
             curStation = cleanLabel.split("_")[1];
             continue;
         }
 
-        // 2. 호기별 데이터 추출 (00번부터 숫자로 끝나는 호기들)
+        // 호기(숫자) 감지 및 17시간 기준 판정
         if (curStation && /^\d+$/.test(cleanLabel)) {
-            const h = parseH(val);
-            const status = (h <= 0) ? 'critical' : 'ok'; // 공기청정기는 0시간일 때만 이상으로 일단 간주
-            
-            // 기존 데이터 리스트에 추가하거나 업데이트
+            const res = analyze(val, CONFIG.AIR_PURIFIER_STD, curStation, 'supply');
             let stObj = data.find(x => x.name === curStation);
             if (!stObj) {
-                stObj = { name: curStation, units: [], isAb: false };
+                stObj = { name: curStation, units: [], isAb: false, isCri: false };
                 data.push(stObj);
             }
-            stObj.units.push({ label: cleanLabel + "호기", val: val || "0", status });
-            if (status === 'critical') stObj.isAb = true;
+            stObj.units.push({ label: cleanLabel + "호기", val: val || "0", res });
+            if (res.s !== 'ok') stObj.isAb = true;
+            if (res.s === 'critical') stObj.isCri = true;
         }
     }
     renderAir(data);
@@ -85,14 +100,14 @@ function processAirPurifier(sheet) {
 function renderAir(data) {
     const abnormal = data.filter(d => d.isAb);
     const build = (list, isSum) => {
-        if (list.length === 0 && isSum) return `<div class="summary-container" style="border-color:var(--success); color:var(--success)">✅ 모든 공기청정기가 정상 가동 중입니다.</div>`;
-        let h = `<div class="section-title" style="color:${isSum?'var(--danger)':'var(--primary)'}">${isSum?'⚠️ 가동 중단 공기청정기 요약':'📋 전체 공기청정기 현황'}</div><div class="table-wrapper"><table><thead><tr><th>역사명</th><th>장비 상세 (호기 / 가동시간)</th></tr></thead><tbody>`;
+        if (list.length === 0 && isSum) return `<div class="summary-container" style="border-color:var(--success); color:var(--success); font-weight:bold;">✅ 모든 공기청정기가 17시간 기준에 맞춰 정상 가동 중입니다.</div>`;
+        let h = `<div class="section-title" style="color:${isSum?'var(--danger)':'var(--primary)'}">${isSum?'⚠️ 가동 이상 공기청정기 요약':'📋 전체 공기청정기 현황'}</div><div class="table-wrapper"><table><thead><tr><th style="width:140px;">역사명</th><th>장비 상세 (호기: 가동시간)</th><th style="width:120px;">판정</th></tr></thead><tbody>`;
         list.forEach(d => {
             h += `<tr><td class="st-name">${d.name}</td><td style="text-align:left; padding-left:20px;">`;
             d.units.forEach(u => {
-                h += `<span class="badge ${u.status === 'critical' ? 'badge-danger' : 'badge-success'}" style="margin-right:10px;">${u.label}: ${u.val}</span>`;
+                h += `<span class="badge ${u.res.c || (u.res.s==='warning'?'badge-warning':'badge-success')}" style="margin-right:8px; margin-bottom:4px; border:1px solid #ddd;">${u.label}: ${u.val}</span>`;
             });
-            h += `</td></tr>`;
+            h += `</td><td><span class="badge badge-${d.isCri?'danger':'warning'}">${d.isCri?'심각':'확인필요'}</span></td></tr>`;
         });
         return h + `</tbody></table></div><br>`;
     };
@@ -100,20 +115,7 @@ function renderAir(data) {
     document.getElementById('full-list-area').innerHTML = build(data, false);
 }
 
-// --- 공용 분석 및 렌더링 (HVAC) ---
-function analyze(val, target, station, type) {
-    if (station === "문양") return { s: 'ok', c: '' };
-    if (!val || val === '0' || val === '-') return { s: 'critical', c: 'critical-val' };
-    const h = parseH(val);
-    if (type === 'exhaust') {
-        if (h >= 0.5) return { s: 'ok', c: '' };
-        if (h <= 0.25) return { s: 'critical', c: 'critical-val' };
-        return { s: 'warning', c: 'bad-val' };
-    }
-    if (h <= target * 0.5) return { s: 'critical', c: 'critical-val' };
-    return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
-}
-
+// --- [공조기(HVAC) 로직 - 기존 유지 및 정제] ---
 function processL1(sheet) {
     const data = [];
     const rules = isCooling ? CONFIG.RULES_COOLING : CONFIG.RULES_NORMAL;
@@ -175,9 +177,9 @@ function formatL2(d, rules) {
 
 function renderHVAC(data, type) {
     const abnormal = data.filter(d => d.isAb);
-    const headers = type === 'L1' ? ['역사명', '시점급기', '시점배기', '종점급기', '종점배기', '최종판정'] : ['역사명', '시점급기', '시점상부', '시점하부', '종점급기', '종점상부', '종점하부', '최종판정'];
+    const headers = type === 'L1' ? ['역사명', '시점급기', '시점배기', '종점급기', '종점배기', '판정'] : ['역사명', '시점급기', '시점상부', '시점하부', '종점급기', '종점상부', '종점하부', '판정'];
     const build = (list, isSum) => {
-        if (list.length === 0 && isSum) return `<div class="summary-container" style="border-color:var(--success); color:var(--success); font-weight:bold;">✅ 모든 공조기가 정상 가동 중입니다.</div>`;
+        if (list.length === 0 && isSum) return `<div class="summary-container" style="border-color:var(--success); color:var(--success); font-weight:bold;">✅ 모든 승강장 공조기가 스케줄에 맞춰 정상 가동 중입니다.</div>`;
         let h = `<div class="section-title" style="color:${isSum?'var(--danger)':'var(--primary)'}">${isSum?'⚠️ 이상 발생 역사 요약':'📋 전체 점검 결과'}</div><div class="table-wrapper"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
         list.forEach(d => {
             h += `<tr><td class="st-name">${d.name}</td>`;
