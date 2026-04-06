@@ -1,44 +1,34 @@
-/* style.css */
 :root {
-    --primary: #0054a6;
-    --accent: #0099ff;
-    --bg: #f8fafc;
-    --danger: #ef4444;
+    --primary: #0054a6; --danger: #ef4444; --warning: #f59e0b;
+    --success: #10b981; --bg: #f8fafc;
 }
 
-body, html { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background: var(--bg); }
-
-.view { transition: 0.5s ease; min-height: 100vh; }
+body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg); overflow-x: hidden; }
 .hidden { display: none !important; }
 
-/* 메인 화면 디자인 */
-.hero {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #003366 0%, #0054a6 100%);
-    color: white;
-    text-align: center;
+/* 메인 Hero 디자인 */
+.hero-view {
+    height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #002b5a 0%, #0054a6 100%); color: white; text-align: center;
 }
-
-.hero h1 { font-size: 3rem; margin-bottom: 20px; line-height: 1.2; }
-.hero p { font-size: 1.2rem; opacity: 0.8; margin-bottom: 40px; }
-
-.start-btn {
-    padding: 18px 40px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--primary);
-    background: white;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    transition: 0.3s;
+.hero-content h1 { font-size: 3rem; margin-bottom: 20px; line-height: 1.2; }
+.main-start-btn {
+    padding: 15px 40px; font-size: 1.2rem; font-weight: bold; color: var(--primary);
+    background: white; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s;
 }
-.start-btn:hover { transform: scale(1.05); background: #f0f0f0; }
+.main-start-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
 
-/* 기타 앱 내부 스타일은 이전과 비슷하게 유지하되, 더 깔끔하게 다듬음 */
-/* ... (생략: 기존 테이블 및 배지 스타일 추가 가능) ... */
+/* 앱 내부 디자인 */
+.app-header { padding: 15px 20px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+.selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 40px 0; }
+.line-card { padding: 40px; text-align: center; border-radius: 15px; cursor: pointer; color: white; font-weight: bold; font-size: 1.2rem; transition: 0.3s; }
+.line-card.l1 { background: #d93d3d; }
+.line-card.l2 { background: #00aa4c; }
+
+.summary-container { background: #fff1f2; border: 2px solid var(--danger); padding: 20px; border-radius: 12px; margin-bottom: 30px; }
+.summary-title { color: var(--danger); font-weight: 800; margin-bottom: 15px; font-size: 1.1rem; }
+
+table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+th { background: #f1f5f9; padding: 12px; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
+td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+.critical-val { background: #fee2e2 !important; color: #b91c1c !important; font-weight: bold; border: 1px solid #fca5a5; }
