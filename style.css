@@ -1,47 +1,249 @@
+/* style.css */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
 :root {
-    --primary: #0054a6; --danger: #ef4444; --warning: #f59e0b;
-    --success: #10b981; --bg: #f0f2f5;
+    --dtro-blue: #004595;
+    --dtro-dark: #002b5a;
+    --bg-dark: #0f172a;
+    --panel-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --danger: #e11d48;
+    --warning: #f59e0b;
+    --success: #10b981;
 }
-body { margin: 0; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background: var(--bg); color: #333; }
+
+body {
+    margin: 0;
+    font-family: 'Pretendard', sans-serif;
+    background-color: #f8fafc;
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
 .hidden { display: none !important; }
 
-/* 메인 화면 */
-.hero-view { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #002b5a 0%, #0054a6 100%); color: white; text-align: center; }
-.hero-content h1 { font-size: 2.8rem; margin-bottom: 20px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-.main-start-btn { padding: 16px 45px; font-size: 1.2rem; font-weight: bold; color: var(--primary); background: white; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-.main-start-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+/* --- [메인 랜딩 화면] --- */
+.hero-view {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at top right, var(--dtro-blue), var(--bg-dark));
+    color: white;
+    text-align: center;
+}
 
-/* 앱 화면 */
-.app-header { padding: 15px 30px; background: white; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.nav-btn { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.line-badge { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
+.hero-content {
+    max-width: 800px;
+    padding: 0 20px;
+}
 
-.container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
-.selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.line-card { padding: 60px; text-align: center; border-radius: 20px; cursor: pointer; color: white; font-size: 1.6rem; font-weight: 900; transition: 0.3s; }
-.line-card.l1 { background: #d93d3d; }
-.line-card.l2 { background: #00aa4c; }
-.line-card:hover { transform: scale(1.02); opacity: 0.9; }
+.hero-content .corp-name {
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 0.3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
 
-/* 업로드 및 배너 */
-.upload-section { background: white; padding: 40px; border-radius: 15px; margin-bottom: 30px; text-align: center; border: 2px dashed #cbd5e0; cursor: pointer; }
-.season-info { padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-weight: bold; font-size: 1.1rem; }
-.cooling-active { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-.normal-active { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    line-height: 1.1;
+}
 
-/* 결과 테이블 */
-.summary-container { background: #fff1f2; border: 2px solid var(--danger); padding: 25px; border-radius: 15px; margin-bottom: 40px; }
-.section-title { font-weight: 900; font-size: 1.3rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-.table-container { background: white; border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-table { width: 100%; border-collapse: collapse; min-width: 900px; }
-th { background: #f8fafc; padding: 14px; font-size: 0.85rem; border-bottom: 2px solid #edf2f7; color: #64748b; }
-td { padding: 14px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
-.st-name { font-weight: bold; color: var(--primary); background: #f0f7ff; width: 120px; }
+.main-start-btn {
+    padding: 20px 60px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.4s;
+}
 
-/* 상태 표시 */
-.badge { padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; }
-.badge-success { background: #def7ec; color: #03543f; }
-.badge-warning { background: #fef3c7; color: #92400e; }
-.badge-danger { background: #fee2e2; color: #991b1b; }
-.critical-val { background: #ef4444 !important; color: white !important; font-weight: 900 !important; border-radius: 4px; }
-.bad-val { background: #fffbeb; color: #b45309; font-weight: bold; }
+.main-start-btn:hover {
+    background: white;
+    color: var(--dtro-dark);
+    transform: translateY(-5px);
+}
+
+/* --- [호선 선택 화면] --- */
+.selector-view {
+    padding: 60px 20px;
+}
+
+.selector-grid {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.line-card {
+    flex: 1;
+    height: 350px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: white;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.line-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 8px;
+}
+
+.line-card.l1::before { background: #d93d3d; }
+.line-card.l2::before { background: #00aa4c; }
+
+.line-card .line-num {
+    font-size: 6rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.line-card.l1 .line-num { color: #d93d3d; }
+.line-card.l2 .line-num { color: #00aa4c; }
+
+.line-card h3 { font-size: 1.5rem; margin: 0; color: #334155; }
+.line-card p { color: #94a3b8; margin-top: 10px; }
+
+.line-card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 30px 50px rgba(0,0,0,0.2);
+}
+
+/* --- [앱 내부 대시보드] --- */
+.app-header {
+    background: var(--bg-dark);
+    padding: 15px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+}
+
+.nav-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.nav-btn:hover { background: rgba(255,255,255,0.1); }
+
+.season-info {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.cooling-active { background: #0ea5e9; color: white; }
+.normal-active { background: #64748b; color: white; }
+
+.upload-section {
+    background: white;
+    max-width: 1200px;
+    margin: 0 auto 30px;
+    padding: 40px;
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    text-align: center;
+    transition: 0.3s;
+}
+
+.upload-section:hover { border-color: var(--dtro-blue); background: #f1f5f9; }
+
+/* --- [결과 테이블] --- */
+.summary-container {
+    background: #fff;
+    border: 1px solid #fda4af;
+    border-left: 6px solid var(--danger);
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: var(--dtro-dark);
+}
+
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 50px;
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+th {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    padding: 15px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+td {
+    padding: 16px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.st-name {
+    font-weight: 700;
+    color: var(--dtro-dark);
+    background: #f8fafc;
+    border-right: 1px solid #edf2f7;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-danger { background: #ffe4e6; color: #e11d48; }
+.badge-warning { background: #fef3c7; color: #d97706; }
+.badge-success { background: #dcfce7; color: #059669; }
+
+.critical-val {
+    background: #fff1f2 !important;
+    color: #e11d48 !important;
+    font-weight: 800;
+    box-shadow: inset 0 0 0 1px #fda4af;
+}
+
+.bad-val { color: #d97706; font-weight: 600; }
