@@ -9,32 +9,42 @@
         :root {
             --line1-color: #d93d3d; --line2-color: #00aa4c; --primary-blue: #0054a6;
             --bg-color: #f4f7fa; --card-bg: #ffffff; --text-main: #2d3748;
-            --success: #38a169; --danger: #e53e3e; --border: #e2e8f0;
-            --cooling-color: #0099ff;
+            --success: #38a169; --warning: #f59e0b; --danger: #ef4444;
+            --border: #e2e8f0; --cooling-color: #0099ff;
         }
         body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
         .container { max-width: 1500px; margin: 0 auto; }
+        
         #main-menu { display: flex; gap: 30px; justify-content: center; align-items: center; min-height: 70vh; }
         .menu-card { background: white; width: 280px; padding: 50px 20px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); cursor: pointer; transition: 0.4s; border-bottom: 8px solid #ccc; }
         .menu-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
         .menu-card.line1 { border-color: var(--line1-color); }
         .menu-card.line2 { border-color: var(--line2-color); }
+
         .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
         .back-btn { cursor: pointer; padding: 10px 18px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-weight: bold; }
+        
         .card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
         .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; }
-        .season-info { padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; display: none; }
-        .cooling-active { background-color: #e0f2fe; color: var(--cooling-color); border: 1px solid var(--cooling-color); display: block; }
-        .normal-active { background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e0; display: block; }
+        
+        .season-info { padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; display: none; font-size: 1.1rem; }
+        .cooling-active { background-color: #e0f2fe; color: var(--cooling-color); border: 1px solid var(--cooling-color); display: block !important; }
+        .normal-active { background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e0; display: block !important; }
+
         .table-container { background: white; border-radius: 16px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; text-align: center; min-width: 1200px; }
         th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid var(--border); font-size: 0.85rem; color: #64748b; }
         td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .st-name { font-weight: 800; color: var(--primary-blue); background-color: #f0f7ff; position: sticky; left: 0; z-index: 5; }
-        .badge { display: inline-block; padding: 5px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
+
+        .badge { display: inline-block; padding: 6px 14px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
         .badge-success { background-color: #def7ec; color: var(--success); }
-        .badge-danger { background-color: #fde8e8; color: var(--danger); }
-        .bad-val { color: var(--danger); font-weight: bold; background: #fff5f5; padding: 2px 5px; border-radius: 4px; }
+        .badge-warning { background-color: #fef3c7; color: var(--warning); }
+        .badge-danger { background-color: #fee2e2; color: var(--danger); border: 1px solid var(--danger); }
+
+        .bad-val { background: #fffbeb; color: var(--warning); font-weight: bold; }
+        .critical-val { background: #fef2f2 !important; color: var(--danger) !important; font-weight: 900 !important; border: 2px solid #fca5a5 !important; }
+        
         .hidden { display: none; }
     </style>
 </head>
@@ -61,7 +71,7 @@
             <div class="card">
                 <div class="upload-area" onclick="document.getElementById('excelFile').click()">
                     <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">일보 엑셀 업로드</span>
-                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">파일 이름이나 시트 내부 날짜를 자동으로 분석합니다.</p>
+                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">반드시 <strong>'승강장'</strong> 공조기 데이터만 추출합니다.</p>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
                 </div>
             </div>
@@ -88,7 +98,7 @@
             currentLine = line;
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-view').classList.remove('hidden');
-            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검' : '2호선 점검';
+            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검 모드' : '2호선 점검 모드';
             document.getElementById('resultTable').innerHTML = '';
             document.getElementById('season-banner').style.display = 'none';
         }
@@ -108,7 +118,6 @@
                 const sheetName = workbook.SheetNames.find(n => n.includes("장비")) || workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 
-                // 파일 이름에서 날짜를 먼저 찾고, 실패하면 시트 내부 날짜 사용
                 let dateFromFileName = file.name.replace(/[^0-9]/g, "").substring(0, 8);
                 determineSeason(sheet, dateFromFileName);
 
@@ -120,29 +129,30 @@
 
         function determineSeason(sheet, fileNameDate) {
             let month = 0, day = 0;
-
-            // 1. 파일 이름에서 추출 시도 (예: 20250807)
             if (fileNameDate && fileNameDate.length === 8) {
                 month = parseInt(fileNameDate.substring(4, 6));
                 day = parseInt(fileNameDate.substring(6, 8));
             } 
-            
-            // 2. 파일 이름 실패 시 엑셀 내부 셀 확인
             if (month === 0) {
                 let dateVal = getCellValue(sheet, 1, 2);
-                if (dateVal instanceof Date) {
-                    month = dateVal.getMonth() + 1;
-                    day = dateVal.getDate();
-                }
+                if (dateVal instanceof Date) { month = dateVal.getMonth() + 1; day = dateVal.getDate(); }
             }
-
             isCoolingSeason = (month === 7 || month === 8 || (month === 9 && day <= 20));
-            
             const banner = document.getElementById('season-banner');
-            banner.innerText = `${isCoolingSeason ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'} 기준 적용 중 (감지된 날짜: ${month}월 ${day}일)`;
+            banner.style.display = 'block';
+            banner.innerText = `${isCoolingSeason ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'} 기준 적용 중 (${month}월 ${day}일)`;
             banner.className = `season-info ${isCoolingSeason ? 'cooling-active' : 'normal-active'}`;
         }
 
+        function analyzeValue(actual, target) {
+            if (!actual || actual === '0' || actual === '-' || actual === '') return { status: 'critical', class: 'critical-val' };
+            const h = parseToHours(actual);
+            if (h <= target * 0.5) return { status: 'critical', class: 'critical-val' };
+            if (h >= target - TOLERANCE && h <= target + TOLERANCE) return { status: 'ok', class: '' };
+            return { status: 'warning', class: 'bad-val' };
+        }
+
+        // --- [2호선 수정: '승강' 키워드 필수 조건 추가] ---
         function processLine2(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const finalResults = [];
@@ -154,7 +164,6 @@
                 let label = cleanText(labelRaw);
                 let value = getCellValue(sheet, r, 4);
 
-                // 역사 제목 찾기: "가동자료"라는 글자가 없더라도 역사명이 포함된 큰 제목줄이면 인식
                 const foundStation = LINE2_STATIONS.find(st => label.includes(st) && (label.includes("가동") || label.length < 15));
                 
                 if (foundStation) {
@@ -162,16 +171,20 @@
                     currentData = { name: foundStation, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
                     continue;
                 }
+
                 if (currentData) {
-                    if (label.includes("급기")) {
-                        if (label.includes("좌") || label.includes("시점")) currentData.ls = value; 
-                        else if (label.includes("우") || label.includes("종점")) currentData.rs = value;
-                    } else if (label.includes("상부배기")) {
-                        if (label.includes("좌") || label.includes("시점")) currentData.lue = value;
-                        else if (label.includes("우") || label.includes("종점")) currentData.rue = value;
-                    } else if (label.includes("하부배기")) {
-                        if (label.includes("좌") || label.includes("시점")) currentData.lle = value;
-                        else if (label.includes("우") || label.includes("종점")) currentData.rle = value;
+                    // [핵심] '승강' 단어가 반드시 포함되어야 '대합실' 등과 섞이지 않음
+                    if (label.includes("승강")) {
+                        if (label.includes("급기")) {
+                            if (label.includes("좌") || label.includes("시점")) currentData.ls = value; 
+                            else if (label.includes("우") || label.includes("종점")) currentData.rs = value;
+                        } else if (label.includes("상부배기")) {
+                            if (label.includes("좌") || label.includes("시점")) currentData.lue = value;
+                            else if (label.includes("우") || label.includes("종점")) currentData.rue = value;
+                        } else if (label.includes("하부배기")) {
+                            if (label.includes("좌") || label.includes("시점")) currentData.lle = value;
+                            else if (label.includes("우") || label.includes("종점")) currentData.rle = value;
+                        }
                     }
                 }
             }
@@ -179,20 +192,24 @@
             renderTableL2(finalResults);
         }
 
-        // --- 기타 공용 함수들 ---
         function formatRowL2(d, rules) {
             const target = rules["default"];
-            const check = (val, goal) => (!val || val === '0' || val === '-' || val === '') ? true : checkRange(parseToHours(val), goal);
-            const pass = [check(d.ls, target.s), check(d.lue, target.ue), check(d.lle, target.le), check(d.rs, target.s), check(d.rue, target.ue), check(d.rle, target.le)];
-            const isAll = pass.every(p => p);
-            const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '-'}</td>`;
-            return `<tr><td class="st-name">${d.name}</td><td style="font-size:0.7rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>${td(d.ls, pass[0])}${td(d.lue, pass[1])}${td(d.lle, pass[2])}${td(d.rs, pass[3])}${td(d.rue, pass[4])}${td(d.rle, pass[5])}<td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
+            const res = [analyzeValue(d.ls, target.s), analyzeValue(d.lue, target.ue), analyzeValue(d.lle, target.le), analyzeValue(d.rs, target.s), analyzeValue(d.rue, target.ue), analyzeValue(d.rle, target.le)];
+            const isCritical = res.some(r => r.status === 'critical');
+            const isWarning = res.some(r => r.status === 'warning');
+            let badge = '<span class="badge badge-success">정상</span>';
+            if (isCritical) badge = '<span class="badge badge-danger">심각(미가동)</span>';
+            else if (isWarning) badge = '<span class="badge badge-warning">확인필요</span>';
+
+            const td = (val, r) => `<td class="${r.class}">${val || '0'}</td>`;
+            return `<tr><td class="st-name">${d.name}</td><td style="font-size:0.7rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>${td(d.ls, res[0])}${td(d.lue, res[1])}${td(d.lle, res[2])}${td(d.rs, res[3])}${td(d.rue, res[4])}${td(d.rle, res[5])}<td>${badge}</td></tr>`;
         }
 
         function renderTableL2(rows) {
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>최종판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
 
+        // --- 1호선 로직 ---
         function processLine1(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const finalResults = [];
@@ -213,11 +230,15 @@
             const type = L1_TYPES[name] || "default";
             const target = rules[type] || rules["default"];
             const raw = [getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col), getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)];
-            const v = raw.map(rv => parseToHours(rv));
-            const pass = [checkRange(v[0], target.s), checkRange(v[1], target.ue), checkRange(v[2], target.s), checkRange(v[3], target.ue)];
-            const isAll = pass.every(p => p);
-            const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '0'}</td>`;
-            return `<tr><td class="st-name">${name}</td><td style="font-size:0.75rem; color:#888">급${target.s}/배${target.ue}</td>${td(raw[0], pass[0])}${td(raw[1], pass[1])}${td(raw[2], pass[2])}${td(raw[3], pass[3])}<td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
+            const res = [analyzeValue(raw[0], target.s), analyzeValue(raw[1], target.ue), analyzeValue(raw[2], target.s), analyzeValue(raw[3], target.ue)];
+            const isCritical = res.some(r => r.status === 'critical');
+            const isWarning = res.some(r => r.status === 'warning');
+            let badge = '<span class="badge badge-success">정상</span>';
+            if (isCritical) badge = '<span class="badge badge-danger">심각</span>';
+            else if (isWarning) badge = '<span class="badge badge-warning">확인필요</span>';
+
+            const td = (val, r) => `<td class="${r.class}">${val || '0'}</td>`;
+            return `<tr><td class="st-name">${name}</td><td style="font-size:0.75rem; color:#888">급${target.s}/배${target.ue}</td>${td(raw[0], res[0])}${td(raw[1], res[1])}${td(raw[2], res[2])}${td(raw[3], res[3])}<td>${badge}</td></tr>`;
         }
 
         function getCellValue(sheet, row, col) { const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})]; return cell ? (cell.t === 'n' && !cell.w ? cell.v : cell.w || cell.v) : ""; }
