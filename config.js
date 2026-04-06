@@ -18,7 +18,7 @@ const CONFIG = {
         "default": { s: 9, ue: 0.5, le: 0.5 }
     },
 
-    // [공기청정기 기준] - 날짜 무관 17시간
+    // [공기청정기 기준] - 날짜 무관 17시간 고정
     AIR_PURIFIER_STD: 17,
 
     STATION_MAP: {
