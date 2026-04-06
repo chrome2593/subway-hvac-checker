@@ -23,25 +23,18 @@
         .menu-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
         .menu-card.line1 { border-color: var(--line1-color); }
         .menu-card.line2 { border-color: var(--line2-color); }
-        .menu-card h2 { font-size: 3.5rem; margin: 0; }
 
-        /* 상단 네비게이션 */
         .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
-        .back-btn { cursor: pointer; padding: 10px 18px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-weight: bold; font-size: 0.9rem; transition: 0.2s; }
-        .back-btn:hover { background: #f8fafc; }
-
+        .back-btn { cursor: pointer; padding: 10px 18px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
         .card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
-        .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .upload-area:hover { border-color: var(--primary-blue); background-color: #f0f7ff; }
+        .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; }
         
         /* 테이블 스타일 */
         .table-container { background: white; border-radius: 16px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; text-align: center; min-width: 1300px; }
-        th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid var(--border); font-size: 0.8rem; color: #64748b; font-weight: 700; }
+        th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid var(--border); font-size: 0.8rem; color: #64748b; }
         td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .st-name { font-weight: 800; color: var(--primary-blue); background-color: #f0f7ff; position: sticky; left: 0; z-index: 5; }
-        
-        /* 판정 디자인 */
         .badge { display: inline-block; padding: 5px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
         .badge-success { background-color: #def7ec; color: var(--success); }
         .badge-danger { background-color: #fde8e8; color: var(--danger); }
@@ -54,13 +47,11 @@
         <div id="main-menu">
             <div class="menu-card line1" onclick="showView('line1')">
                 <h2 style="color:var(--line1-color)">1</h2>
-                <p style="font-weight:bold; margin:15px 0 5px;">1호선 승강장 공조기</p>
-                <small style="color:#94a3b8">설화명곡 ~ 안심</small>
+                <p style="font-weight:bold; margin-top:15px;">1호선 점검</p>
             </div>
             <div class="menu-card line2" onclick="showView('line2')">
                 <h2 style="color:var(--line2-color)">2</h2>
-                <p style="font-weight:bold; margin:15px 0 5px;">2호선 승강장 공조기</p>
-                <small style="color:#94a3b8">다사 ~ 영남대 (상/하부 분리)</small>
+                <p style="font-weight:bold; margin-top:15px;">2호선 점검</p>
             </div>
         </div>
 
@@ -70,11 +61,10 @@
                 <h1 id="view-title" style="margin:0; font-size:1.4rem; color:var(--primary-blue);"></h1>
                 <div style="width:80px;"></div>
             </div>
-
             <div class="card">
                 <div class="upload-area" onclick="document.getElementById('excelFile').click()">
-                    <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold; font-size:1rem;">엑셀 일보 업로드</span>
-                    <p id="upload-guide" style="margin-top:20px; color:#64748b;"></p>
+                    <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">엑셀 일보 업로드</span>
+                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">±40분 오차 허용 (상부 1h / 하부 0.5h 기준)</p>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
                 </div>
             </div>
@@ -85,26 +75,21 @@
     <script>
         let currentLine = '';
         const TOLERANCE = 40 / 60; 
-
-        // [기준값 데이터 업데이트] 상부배기(ue): 1h, 하부배기(le): 0.5h
         const RULES = { 
             "type1": { s: 17, ue: 1, le: 0.5 }, "type2": { s: 15, ue: 1, le: 0.5 }, 
             "type3": { s: 15.5, ue: 1, le: 0.5 }, "default": { s: 16.5, ue: 1, le: 0.5 } 
         };
-        
         const STATION_TYPES = {
             "명덕": "type1", "청라언덕": "type1", "반월당": "type1",
             "현충로": "type2", "중앙로": "type2", "안심": "type2", "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2"
         };
-
         const LINE2_STATIONS = ["다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
 
         function showView(line) {
             currentLine = line;
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-view').classList.remove('hidden');
-            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 승강장 공조기 점검' : '2호선 승강장 공조기 점검';
-            document.getElementById('upload-guide').innerText = `해당 호선의 일보 파일을 선택하세요. (오차 ±40분 허용)`;
+            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검 모드' : '2호선 점검 모드';
             document.getElementById('resultTable').innerHTML = '';
         }
 
@@ -116,7 +101,6 @@
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if(!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary' });
@@ -127,43 +111,38 @@
             reader.readAsBinaryString(file);
         });
 
-        // --- [1호선 로직] ---
-        function processLine1(sheet) {
-            const range = XLSX.utils.decode_range(sheet['!ref']);
-            const rows = [];
-            [4, 5].forEach(col => { rows.push(extractRowL1(sheet, (col===4?"설화명곡":"화원"), col, 81, 82, 89, 90)); });
-            for (let col = 4; col <= range.e.c; col++) {
-                let name = cleanText(getCellValue(sheet, 0, col));
-                if (!name || ['합계','명곡','화원'].includes(name)) continue;
-                rows.push(extractRowL1(sheet, name, col, 5, 6, 13, 14));
-            }
-            renderTableL1(rows);
-        }
-
-        // --- [2호선 로직: 장비명 키워드 정밀 매칭] ---
+        // --- [2호선 수정: 키워드 포함 기반 검색] ---
         function processLine2(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const results = [];
-            
+            let currentData = null;
+
             for (let r = 0; r <= range.e.r; r++) {
-                let cellVal = cleanText(getCellValue(sheet, r, 2) || getCellValue(sheet, r, 3)); 
-                if (LINE2_STATIONS.includes(cellVal)) {
-                    let stData = { name: cellVal, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
-                    // 이름 발견 후 아래 25행 탐색
-                    for(let i=1; i<=25; i++) {
-                        let label = cleanText(getCellValue(sheet, r+i, 2) || getCellValue(sheet, r+i, 3));
-                        let val = getCellValue(sheet, r+i, 4); // E열
-                        if(label.includes("급기")) {
-                            if(label.includes("좌")) stData.ls = val; else stData.rs = val;
-                        } else if(label.includes("상부배기")) {
-                            if(label.includes("좌")) stData.lue = val; else stData.rue = val;
-                        } else if(label.includes("하부배기")) {
-                            if(label.includes("좌")) stData.lle = val; else stData.rle = val;
-                        }
+                // B, C, D열의 텍스트를 모두 합치고 공백 제거
+                let label = cleanText(getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2) + getCellValue(sheet, r, 3));
+                let value = getCellValue(sheet, r, 4); 
+
+                // 역사 이름 찾기: "일일장비가동자료_강창" 안에 "강창"이 있는지 확인
+                const foundStation = LINE2_STATIONS.find(st => label.includes(st));
+                
+                if (foundStation) {
+                    if (currentData) results.push(formatRowL2(currentData));
+                    currentData = { name: foundStation, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
+                    continue;
+                }
+
+                if (currentData) {
+                    // 키워드 매칭 (부분 일치 허용)
+                    if (label.includes("급기")) {
+                        if (label.includes("좌")) currentData.ls = value; else currentData.rs = value;
+                    } else if (label.includes("상부배기")) {
+                        if (label.includes("좌")) currentData.lue = value; else currentData.rue = value;
+                    } else if (label.includes("하부배기")) {
+                        if (label.includes("좌")) currentData.lle = value; else currentData.rle = value;
                     }
-                    results.push(formatRowL2(stData));
                 }
             }
+            if (currentData) results.push(formatRowL2(currentData));
             renderTableL2(results);
         }
 
@@ -171,14 +150,12 @@
             const type = STATION_TYPES[d.name] || "default";
             const target = RULES[type];
             const check = (val, goal) => {
-                if(!val || val === '0' || val === '-') return true; // 장비 없는 경우 패스
+                if(!val || val === '0' || val === '-') return true; 
                 let h = parseToHours(val);
                 return (h >= goal - TOLERANCE) && (h <= goal + TOLERANCE);
             };
-
             const pass = [check(d.ls, target.s), check(d.lue, target.ue), check(d.lle, target.le), check(d.rs, target.s), check(d.rue, target.ue), check(d.rle, target.le)];
             const isAll = pass.every(p => p);
-
             const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '-'}</td>`;
 
             return `<tr><td class="st-name">${d.name}</td>
@@ -189,25 +166,22 @@
         }
 
         function renderTableL2(rows) {
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr>
-                <th>역사명</th><th>기준(h)</th>
-                <th>시점급기</th><th>시점상부</th><th>시점하부</th>
-                <th>종점급기</th><th>종점상부</th><th>종점하부</th>
-                <th>최종판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
 
-        // --- 공통 유틸리티 ---
-        function getCellValue(sheet, row, col) {
-            const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})];
-            return cell ? cell.w || cell.v : "";
+        // --- 1호선 로직 유지 ---
+        function processLine1(sheet) {
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            const rows = [];
+            [4, 5].forEach(col => { rows.push(extractRowL1(sheet, (col===4?"설화명곡":"화원"), col, 81, 82, 89, 90)); });
+            for (let col = 4; col <= range.e.c; col++) {
+                let name = cleanText(getCellValue(sheet, 0, col));
+                if (!name || ['합계','명곡','화원'].includes(name)) continue;
+                rows.push(extractRowL1(sheet, name, col, 5, 6, 13, 14));
+            }
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
-        const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
-        const parseToHours = (val) => {
-            if(!val) return 0;
-            if(typeof val === 'number') return val * 24;
-            const p = String(val).split(':');
-            return p.length < 2 ? parseFloat(val)||0 : parseInt(p[0]) + (parseInt(p[1])/60);
-        };
+
         function extractRowL1(sheet, name, col, lsR, leR, rsR, reR) {
             const type = STATION_TYPES[name] || "default";
             const target = {s: RULES[type].s, e: RULES[type].ue};
@@ -219,9 +193,18 @@
                    raw.map((r, i) => `<td class="${pass[i]?'':'bad-val'}">${r||'0'}</td>`).join('') +
                    `<td><span class="badge ${isAll?'badge-success':'badge-danger'}">${isAll?'정상':'확인필요'}</span></td></tr>`;
         }
-        function renderTableL1(rows) {
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+
+        function getCellValue(sheet, row, col) {
+            const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})];
+            return cell ? cell.w || cell.v : "";
         }
+        const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
+        const parseToHours = (val) => {
+            if(!val) return 0;
+            if(typeof val === 'number') return val * 24;
+            const p = String(val).split(':');
+            return p.length < 2 ? parseFloat(val)||0 : parseInt(p[0]) + (parseInt(p[1])/60);
+        };
     </script>
 </body>
 </html>
