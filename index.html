@@ -12,7 +12,6 @@
         <div class="hero-content">
             <div class="dtro-logo">DTRO</div>
             <h1>승강장 공조 가동 현황<br>자동 점검 시스템</h1>
-            <p>매일 생성되는 가동일보를 분석하여 스케줄 준수 여부를 판정합니다.</p>
             <button class="main-start-btn" onclick="showApp()">시스템 시작하기</button>
         </div>
     </div>
@@ -21,24 +20,23 @@
         <header class="app-header">
             <button class="nav-btn" onclick="showHome()">← 메인으로</button>
             <div id="line-indicator" class="line-badge">호선을 선택하세요</div>
+            <div style="width:100px;"></div>
         </header>
 
         <div class="container">
             <div id="line-selector" class="selector-grid">
-                <div class="line-card l1" onclick="selectLine('line1')">1호선 점검</div>
-                <div class="line-card l2" onclick="selectLine('line2')">2호선 점검</div>
+                <div class="line-card l1" onclick="selectLine('line1')">1호선 가동일보</div>
+                <div class="line-card l2" onclick="selectLine('line2')">2호선 가동일보</div>
             </div>
 
             <div id="main-content" class="hidden">
-                <div id="season-banner"></div>
+                <div id="season-banner" class="season-info"></div>
                 <div class="upload-section">
                     <input type="file" id="excelFile" hidden />
                     <div class="drop-zone" onclick="document.getElementById('excelFile').click()">
-                        <div class="icon">📁</div>
-                        <p>가동일보 엑셀 파일을 선택하거나 드래그하세요</p>
+                        <p>엑셀 파일을 선택하거나 이 영역으로 드래그하세요</p>
                     </div>
                 </div>
-
                 <div id="summary-area"></div>
                 <div id="full-list-area"></div>
             </div>
