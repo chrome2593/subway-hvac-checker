@@ -10,7 +10,7 @@
 <body>
     <div id="home-view" class="hero-view">
         <div class="hero-content">
-            <div style="letter-spacing: 5px; opacity: 0.8; margin-bottom: 15px; font-weight: 300;">DAEGU TRANSPORTATION CORP.</div>
+            <div style="letter-spacing: 6px; opacity: 0.8; margin-bottom: 10px; font-weight: 300;">DAEGU TRANSPORTATION CORP.</div>
             <h1>기계설비 가동현황<br>지능형 점검 시스템</h1>
             <button class="main-start-btn" onclick="showApp()">운영지원 시스템 접속</button>
         </div>
@@ -22,7 +22,7 @@
                 <button class="nav-btn" onclick="showHome()">← 시스템 종료</button>
                 <div id="line-indicator" class="line-badge">노선을 선택하십시오</div>
                 <div class="tab-menu" id="equipment-tabs">
-                    <button class="tab-btn active" onclick="switchTab('hvac')">플랫폼 공조기</button>
+                    <button class="tab-btn active" onclick="switchTab('hvac')">승강장 공조기</button>
                     <button class="tab-btn" onclick="switchTab('air')">공기청정기</button>
                 </div>
             </div>
@@ -32,23 +32,23 @@
             <section id="line-selector" class="selector-view">
                 <div class="selector-grid">
                     <div class="line-card l1" onclick="selectLine('line1')">
-                        <div class="lnum">1</div>
-                        <div style="font-weight: 800; margin-top: 15px; color: #334155;">1호선 가동점검</div>
+                        <span class="lnum">1</span>
+                        <div style="font-weight: 900; margin-top: 20px; font-size: 1.4rem;">1호선 가동점검</div>
                     </div>
                     <div class="line-card l2" onclick="selectLine('line2')">
-                        <div class="lnum">2</div>
-                        <div style="font-weight: 800; margin-top: 15px; color: #334155;">2호선 가동점검</div>
+                        <span class="lnum">2</span>
+                        <div style="font-weight: 900; margin-top: 20px; font-size: 1.4rem;">2호선 가동점검</div>
                     </div>
                 </div>
             </section>
 
-            <section id="main-content" class="hidden" style="margin-top: 30px;">
+            <section id="main-content" class="hidden">
                 <div id="season-banner"></div>
                 <div class="upload-box" onclick="document.getElementById('excelFile').click()">
                     <input type="file" id="excelFile" hidden />
-                    <div class="upload-icon">📊</div>
-                    <h3 style="margin:0; color: var(--dark);">가동일보 파일 업로드</h3>
-                    <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 10px;">분석할 엑셀 파일을 선택하거나 이곳에 드롭하세요.</p>
+                    <div style="font-size: 3rem; margin-bottom: 15px;">📁</div>
+                    <h3 style="margin:0; color: var(--dark); font-size: 1.2rem;">가동일보 엑셀 파일 업로드</h3>
+                    <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 10px;">파일을 선택하거나 이곳에 드롭하세요.</p>
                 </div>
                 <div id="summary-area"></div>
                 <div id="full-list-area"></div>
