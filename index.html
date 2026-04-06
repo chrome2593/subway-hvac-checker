@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1·2호선 가동일보 분석 시스템</title>
+    <title>1·2호선 가동일보 분석</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -12,6 +12,7 @@
         <div class="hero-content">
             <div class="corp-tag">DAEGU TRANSPORTATION CORP.</div>
             <h1>1·2호선 가동일보 분석</h1>
+            <p style="margin-bottom:40px; color:#64748b; font-weight:500;">가동일보를 업로드하여 승강장 공조기와 공기청정기를 자동 점검하세요.</p>
             <button class="main-start-btn" onclick="showApp()">분석 시작</button>
         </div>
     </div>
@@ -20,32 +21,21 @@
         <header class="app-header">
             <div class="container header-inner">
                 <button class="back-btn" onclick="goBack()">← 뒤로가기</button>
-                <div id="line-indicator" class="line-badge">노선을 선택하십시오</div>
-                <div style="width:100px;"></div>
+                <div id="line-indicator" class="line-badge">파일을 업로드 해주십시오</div>
+                <div style="width:80px;"></div>
             </div>
         </header>
 
         <main class="container">
-            <section id="line-selector" class="selector-view">
-                <div class="selector-grid">
-                    <div class="line-card l1" onclick="selectLine('line1')">
-                        <div class="lnum">1</div>
-                        <h3>1호선 가동일보 분석</h3>
-                    </div>
-                    <div class="line-card l2" onclick="selectLine('line2')">
-                        <div class="lnum">2</div>
-                        <h3>2호선 가동일보 분석</h3>
-                    </div>
-                </div>
-            </section>
-
-            <section id="main-content" class="hidden">
-                <div id="season-banner" class="season-info"></div>
+            <section id="main-content" style="margin-top: 40px;">
+                <div id="season-banner" class="season-info" style="display:none;"></div>
+                
                 <div class="upload-box" onclick="document.getElementById('excelFile').click()">
                     <input type="file" id="excelFile" hidden />
-                    <div style="font-size: 3.5rem; margin-bottom: 20px;">📂</div>
-                    <h3 style="margin:0; color: var(--primary); font-size: 1.5rem;">가동일보 파일 업로드</h3>
-                    <p style="color:#64748b; margin-top:15px; font-weight: 600;">드림스 가동일보 드래그 앤 드롭</p>
+                    <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
+                    <h3 style="margin:0; color: var(--primary); font-size: 1.6rem;">가동일보 파일 업로드</h3>
+                    <p style="color:#64748b; margin-top:15px; font-weight: 600; font-size: 1.1rem;">드림스 가동일보 드래그 앤 드롭</p>
+                    <p style="color:#94a3b8; font-size: 0.9rem; margin-top: 10px;">1호선(YYYYMMDD) 및 2호선(일보YYYYMMDD) 파일 자동 구분</p>
                 </div>
                 
                 <div id="summary-area"></div>
