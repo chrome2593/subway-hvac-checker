@@ -8,59 +8,51 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-
     <div id="home-view" class="hero-view">
         <div class="hero-content">
-            <div style="letter-spacing: 4px; opacity: 0.7; margin-bottom: 10px;">DAEGU TRANSPORTATION CORP.</div>
-            <h1>승강장 공조 시스템<br>지능형 가동 점검</h1>
-            <button class="main-start-btn" onclick="showApp()">운영지원 시스템 접속</button>
+            <div class="corp-tag">DAEGU TRANSPORTATION CORP.</div>
+            <h1>기계설비 가동현황<br>지능형 점검 시스템</h1>
+            <button class="main-start-btn" onclick="showApp()">시스템 접속</button>
         </div>
     </div>
 
     <div id="app-view" class="hidden">
         <header class="app-header">
             <div class="container header-inner">
-                <button class="nav-btn" onclick="showHome()">← 처음으로</button>
-                <div id="line-indicator" class="line-badge">노선 선택</div>
-                <div style="width:80px;"></div>
+                <button class="nav-btn" onclick="showHome()">← 종료</button>
+                <div id="line-indicator" class="line-badge">호선을 선택하세요</div>
+                <div class="tab-menu" id="equipment-tabs">
+                    <button class="tab-btn active" onclick="switchTab('hvac')">승강장 공조기</button>
+                    <button class="tab-btn" onclick="switchTab('air')">공기청정기</button>
+                </div>
             </div>
         </header>
 
-        <main class="container">
-            <section id="line-selector" class="selector-view">
-                <div style="text-align:center;">
-                    <h2 style="font-weight: 800; font-size: 2rem;">검사 노선 선택</h2>
-                    <p style="color:#64748b;">점검하고자 하는 호선을 선택하여 주십시오.</p>
-                </div>
+        <main class="container content-wrapper">
+            <div id="line-selector" class="selector-view">
                 <div class="selector-grid">
                     <div class="line-card l1" onclick="selectLine('line1')">
-                        <div class="line-num">1</div>
-                        <h3>1호선 가동점검</h3>
-                        <p>설화명곡 ~ 안심</p>
+                        <span class="lnum">1</span>
+                        <div class="ltxt">1호선 점검</div>
                     </div>
                     <div class="line-card l2" onclick="selectLine('line2')">
-                        <div class="line-num">2</div>
-                        <h3>2호선 가동점검</h3>
-                        <p>문양 ~ 영남대</p>
+                        <span class="lnum">2</span>
+                        <div class="ltxt">2호선 점검</div>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section id="main-content" class="hidden" style="margin-top: 40px;">
+            <div id="main-content" class="hidden">
                 <div id="season-banner"></div>
-                
-                <div class="dashboard-card">
-                    <div class="upload-section" onclick="document.getElementById('excelFile').click()">
-                        <input type="file" id="excelFile" hidden />
-                        <div style="font-size: 2.5rem; margin-bottom: 10px;">📂</div>
-                        <h3 style="margin:0;">엑셀 파일 업로드</h3>
-                        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 8px;">분석할 가동일보 파일을 선택하거나 드래그하세요.</p>
-                    </div>
+                <div class="upload-box" onclick="document.getElementById('excelFile').click()">
+                    <input type="file" id="excelFile" hidden />
+                    <div class="upload-icon">📄</div>
+                    <p>분석할 가동일보 엑셀 파일을 업로드하세요</p>
                 </div>
-
+                
                 <div id="summary-area"></div>
                 <div id="full-list-area"></div>
-            </section>
+            </div>
         </main>
     </div>
 
