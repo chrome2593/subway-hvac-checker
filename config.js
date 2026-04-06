@@ -3,7 +3,7 @@ const CONFIG = {
         COOLING_START: { month: 7, day: 1 },
         COOLING_END: { month: 9, day: 20 }
     },
-    TOLERANCE: 40 / 60, // 급기 오차 40분
+    TOLERANCE: 40 / 60, // 급기 오차 40분 (0.66h)
 
     // [비냉방 시즌 기준]
     RULES_NORMAL: {
@@ -19,18 +19,12 @@ const CONFIG = {
         "default": { s: 9, ue: 0.5, le: 0.5 }
     },
 
-    // 역사별 유형 매핑 (시즌에 따라 유동적으로 할당됨)
-    GET_STATION_TYPE: (name, isCooling) => {
-        const n = name.replace(/\s+/g, '');
-        if (isCooling) {
-            if (["화원", "반야월", "각산"].includes(n)) return "type1";
-            if (["대곡", "월촌", "송현", "교대", "명덕", "동구청", "방촌", "용계", "율하", "신기"].includes(n)) return "type2";
-            return "default";
-        } else {
-            if (["명덕", "청라언덕", "반월당(2호선)", "반월당"].includes(n)) return "type1";
-            if (["현충로", "중앙로", "안심", "다사", "두류", "담티", "영남대"].includes(n)) return "type2";
-            if (["반월당(1호선)"].includes(n)) return "type3";
-            return "default";
-        }
-    }
+    // 역사별 유형 매핑
+    STATION_MAP: {
+        "명덕": "type1", "청라언덕": "type1", "반월당": "type1", // 2호선 반월당 포함
+        "현충로": "type2", "중앙로": "type2", "안심": "type2", "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2",
+        "반월당(1호선)": "type3"
+    },
+
+    LINE2_STATIONS: ["문양", "다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"]
 };
