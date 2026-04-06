@@ -74,9 +74,8 @@ function analyze(val, target, station, type, isAir = false) {
     return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
 }
 
-// --- [렌더링 엔진: 상세 요약 기능 강화] ---
+// --- [렌더링 엔진: 시간 형식 통일 로직 포함] ---
 function renderAll(hvac, air) {
-    // 1. 심각(Critical) 항목만 필터링 (확인필요 제외)
     const hvacCri = hvac.filter(d => d.isCri);
     const airCri = air.filter(d => d.isCri);
 
@@ -91,25 +90,27 @@ function renderAll(hvac, air) {
                     <div class="summary-section-title" style="color:var(--success); border-bottom-color:#dcfce7;">✅ 모든 장비가 정상 가동 중입니다.</div>
                    </div>`;
     } else {
-        // 승강장 공조기 심각 요약
+        // [승강장 공조기 요약]
         if (hvacCri.length > 0) {
             sumHtml += `<div style="margin-bottom:25px;"><strong>[승강장 공조기]</strong><div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">`;
             hvacCri.forEach(d => {
                 d.res.forEach((r, idx) => {
                     if (r.s === 'critical') {
-                        sumHtml += `<span class="badge badge-danger">${d.name} ${hvacLabels[idx]} (${d.raw[idx] || '0'})</span>`;
+                        // formatToHMS 함수로 시간 형식 통일
+                        sumHtml += `<span class="badge badge-danger">${d.name} ${hvacLabels[idx]} (${formatToHMS(d.raw[idx])})</span>`;
                     }
                 });
             });
             sumHtml += `</div></div>`;
         }
-        // 공기청정기 심각 요약
+        // [공기청정기 요약]
         if (airCri.length > 0) {
             sumHtml += `<div><strong>[공기청정기]</strong><div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">`;
             airCri.forEach(d => {
                 d.units.forEach(u => {
                     if (u.res.s === 'critical') {
-                        sumHtml += `<span class="badge badge-danger">${d.name} ${u.label} (${u.val})</span>`;
+                        // formatToHMS 함수로 시간 형식 통일
+                        sumHtml += `<span class="badge badge-danger">${d.name} ${u.label} (${formatToHMS(u.val)})</span>`;
                     }
                 });
             });
@@ -119,10 +120,38 @@ function renderAll(hvac, air) {
     }
     document.getElementById('summary-area').innerHTML = sumHtml;
 
-    // 2. 전체 상세 리스트
+    // 상세 결과 출력 (기존 유지)
     let fullHtml = `<div class="section-title">📊 승강장 공조기 상세 결과</div>` + buildHVACTable(hvac);
     fullHtml += `<div class="section-title" style="margin-top:60px;">🌬️ 공기청정기 상세 결과</div>` + buildAirTable(air);
     document.getElementById('full-list-area').innerHTML = fullHtml;
+}
+
+// --- [공통 시간 포맷터: 핵심 추가] ---
+function formatToHMS(val) {
+    if (!val || val === '0' || val === 0 || val === '-') return "0:00:00";
+    
+    let totalSeconds;
+    if (typeof val === 'number') {
+        // 엑셀 시리얼 날짜(1일 = 24시간) 처리
+        totalSeconds = Math.round(val * 24 * 3600);
+    } else if (typeof val === 'string' && val.includes(':')) {
+        // 이미 타임 스트링인 경우 파싱 후 재정렬 (안정성 확보)
+        const parts = val.split(':');
+        const h = parseInt(parts[0]) || 0;
+        const m = parseInt(parts[1]) || 0;
+        const s = parseInt(parts[2]) || 0;
+        totalSeconds = h * 3600 + m * 60 + s;
+    } else {
+        const num = parseFloat(val);
+        if (isNaN(num)) return "0:00:00";
+        totalSeconds = Math.round(num * 3600);
+    }
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function buildHVACTable(data) {
@@ -130,7 +159,7 @@ function buildHVACTable(data) {
     let h = `<div class="table-wrapper"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
     data.forEach(d => {
         h += `<tr><td class="st-name">${d.name}</td>`;
-        d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${v || '0'}</td>`; });
+        d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${formatToHMS(v)}</td>`; });
         h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'확인필요':'정상')}</span></td></tr>`;
     });
     return h + `</tbody></table></div>`;
@@ -140,13 +169,13 @@ function buildAirTable(data) {
     let h = `<div class="table-wrapper"><table><thead><tr><th style="width:140px;">역사명</th><th>장비 상세 현황</th><th style="width:100px;">판정</th></tr></thead><tbody>`;
     data.forEach(d => {
         h += `<tr><td class="st-name">${d.name}</td><td><div class="units-grid">`;
-        d.units.forEach(u => { h += `<div class="unit-box ${u.res.c}"><strong>${u.label}</strong>${u.val}</div>`; });
+        d.units.forEach(u => { h += `<div class="unit-box ${u.res.c}"><strong>${u.label}</strong>${formatToHMS(u.val)}</div>`; });
         h += `</div></td><td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isAb?'이상':'정상'}</span></td></tr>`;
     });
     return h + `</tbody></table></div>`;
 }
 
-// --- [추출 로직: 1호선/2호선] ---
+// --- [추출 로직: 기존 유지] ---
 function getL1HVAC(sheet) {
     const data = []; const rules = isCooling ? CONFIG.RULES_COOLING : CONFIG.RULES_NORMAL;
     [4, 5].forEach(col => { let name = (col === 4) ? "설화명곡" : "화원"; data.push(getL1HVAC_Obj(sheet, name, col, 81, 82, 89, 90, rules)); });
