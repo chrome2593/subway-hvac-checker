@@ -3,257 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>승강장 공조기 점검 시스템 | 대구교통공사</title>
+    <title>DTRO 승강장 공조 시스템</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --line1-color: #d93d3d; --line2-color: #00aa4c; --primary-blue: #0054a6;
-            --bg-color: #f4f7fa; --card-bg: #ffffff; --text-main: #2d3748;
-            --success: #38a169; --warning: #f59e0b; --danger: #ef4444;
-            --border: #e2e8f0; --cooling-color: #0099ff;
-        }
-        body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
-        .container { max-width: 1500px; margin: 0 auto; }
-        
-        #main-menu { display: flex; gap: 30px; justify-content: center; align-items: center; min-height: 70vh; }
-        .menu-card { background: white; width: 280px; padding: 50px 20px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); cursor: pointer; transition: 0.4s; border-bottom: 8px solid #ccc; }
-        .menu-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-        .menu-card.line1 { border-color: var(--line1-color); }
-        .menu-card.line2 { border-color: var(--line2-color); }
-
-        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
-        .back-btn { cursor: pointer; padding: 10px 18px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-weight: bold; }
-        
-        .card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
-        .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; }
-        
-        .season-info { padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; display: none; font-size: 1.1rem; }
-        .cooling-active { background-color: #e0f2fe; color: var(--cooling-color); border: 2px solid var(--cooling-color); display: block !important; }
-        .normal-active { background-color: #f1f5f9; color: #64748b; border: 2px solid #cbd5e0; display: block !important; }
-
-        /* 요약 및 테이블 스타일 */
-        .summary-title { margin: 40px 0 15px; color: var(--danger); font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .full-list-title { margin: 50px 0 15px; color: var(--primary-blue); font-size: 1.2rem; font-weight: 800; }
-        
-        .table-container { background: white; border-radius: 16px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; text-align: center; min-width: 1200px; }
-        th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid var(--border); font-size: 0.85rem; color: #64748b; }
-        td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-        .st-name { font-weight: 800; color: var(--primary-blue); background-color: #f0f7ff; position: sticky; left: 0; z-index: 5; }
-
-        .badge { display: inline-block; padding: 6px 14px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
-        .badge-success { background-color: #def7ec; color: var(--success); }
-        .badge-warning { background-color: #fef3c7; color: var(--warning); }
-        .badge-danger { background-color: #fee2e2; color: var(--danger); border: 1px solid var(--danger); }
-
-        .bad-val { background: #fffbeb; color: var(--warning); font-weight: bold; }
-        .critical-val { background: #fef2f2 !important; color: var(--danger) !important; font-weight: 900 !important; border: 2px solid #fca5a5 !important; }
-        
-        .hidden { display: none; }
-        .empty-msg { padding: 40px; text-align: center; color: #94a3b8; font-weight: bold; }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <div id="main-menu">
-            <div class="menu-card line1" onclick="showView('line1')">
-                <h2 style="color:var(--line1-color)">1</h2>
-                <p style="font-weight:bold; margin-top:15px;">1호선 가동일보 점검</p>
-            </div>
-            <div class="menu-card line2" onclick="showView('line2')">
-                <h2 style="color:var(--line2-color)">2</h2>
-                <p style="font-weight:bold; margin-top:15px;">2호선 가동일보 점검</p>
-            </div>
-        </div>
 
-        <div id="app-view" class="hidden">
-            <div class="nav-header">
-                <div class="back-btn" onclick="goHome()">← 처음으로</div>
-                <h1 id="view-title" style="margin:0; font-size:1.4rem; color:var(--primary-blue);"></h1>
-                <div style="width:80px;"></div>
-            </div>
-            <div id="season-banner" class="season-info"></div>
-            <div class="card">
-                <div class="upload-area" onclick="document.getElementById('excelFile').click()">
-                    <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">일보 엑셀 업로드</span>
-                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">배기: 30분 이상 정상 / 15분 이하 심각 판정</p>
-                    <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
-                </div>
-            </div>
-
-            <div id="summary-section"></div>
-
-            <div id="full-list-section"></div>
+    <div id="home-view" class="view">
+        <div class="hero">
+            <div class="logo">🟦 DTRO</div>
+            <h1>승강장 공조기 가동 현황<br>자동 점검 시스템</h1>
+            <p>가동일보 데이터를 분석하여 스케줄 준수 여부를 자동으로 판정합니다.</p>
+            <button class="start-btn" onclick="showApp()">시스템 시작하기</button>
         </div>
     </div>
 
-    <script>
-        let currentLine = '';
-        let isCoolingSeason = false;
-        const TOLERANCE = 40 / 60; 
+    <div id="app-view" class="view hidden">
+        <div class="container">
+            <header class="nav-header">
+                <button class="back-home-btn" onclick="showHome()">← 메인으로</button>
+                <div class="view-title">공조 가동 점검</div>
+                <div style="width:100px;"></div>
+            </header>
 
-        const RULES_NORMAL = { "type1": { s: 17, ue: 1, le: 0.5 }, "type2": { s: 15, ue: 1, le: 0.5 }, "type3": { s: 15.5, ue: 1, le: 0.5 }, "default": { s: 16.5, ue: 1, le: 0.5 } };
-        const RULES_COOLING = { "type1": { s: 12, ue: 0.5, le: 0.5 }, "type2": { s: 9, ue: 0.5, le: 0.5 }, "default": { s: 9, ue: 0.5, le: 0.5 } };
-        const L1_TYPES = { "설화명곡": "default", "화원": "type1", "반야월": "type1", "각산": "type1", "대곡": "type2", "월촌": "type2", "송현": "type2", "교대": "type2", "명덕": "type2", "동구청": "type2", "방촌": "type2", "용계": "type2", "율하": "type2", "신기": "type2", "반월당": "type3" };
-        const LINE2_STATIONS = ["문양", "다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
+            <div id="line-selector" class="selector-grid">
+                <div class="line-card l1" onclick="selectLine('line1')">1호선</div>
+                <div class="line-card l2" onclick="selectLine('line2')">2호선</div>
+            </div>
 
-        function showView(line) {
-            currentLine = line;
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('app-view').classList.remove('hidden');
-            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검 모드' : '2호선 점검 모드';
-            document.getElementById('summary-section').innerHTML = '';
-            document.getElementById('full-list-section').innerHTML = '';
-            document.getElementById('season-banner').style.display = 'none';
-        }
+            <div id="app-content" class="hidden">
+                <div id="season-banner"></div>
+                <div class="upload-card">
+                    <input type="file" id="excelFile" hidden />
+                    <div class="drop-zone" onclick="document.getElementById('excelFile').click()">
+                        <p>엑셀 파일을 클릭하거나 드래그하세요.</p>
+                    </div>
+                </div>
+                <div id="summary-section"></div>
+                <div id="full-list-section"></div>
+            </div>
+        </div>
+    </div>
 
-        function goHome() {
-            document.getElementById('main-menu').classList.remove('hidden');
-            document.getElementById('app-view').classList.add('hidden');
-            document.getElementById('excelFile').value = '';
-        }
-
-        document.getElementById('excelFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const workbook = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
-                const sheetName = workbook.SheetNames.find(n => n.includes("장비")) || workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                let dateFromFileName = file.name.replace(/[^0-9]/g, "").substring(0, 8);
-                determineSeason(sheet, dateFromFileName);
-                if(currentLine === 'line1') processLine1(sheet);
-                else processLine2(sheet);
-            };
-            reader.readAsBinaryString(file);
-        });
-
-        function determineSeason(sheet, fileNameDate) {
-            let month = 0, day = 0;
-            if (fileNameDate && fileNameDate.length === 8) { month = parseInt(fileNameDate.substring(4, 6)); day = parseInt(fileNameDate.substring(6, 8)); } 
-            if (month === 0) { let dateVal = getCellValue(sheet, 1, 2); if (dateVal instanceof Date) { month = dateVal.getMonth() + 1; day = dateVal.getDate(); } }
-            isCoolingSeason = (month === 7 || month === 8 || (month === 9 && day <= 20));
-            const banner = document.getElementById('season-banner');
-            banner.style.display = 'block';
-            banner.innerText = `${isCoolingSeason ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'} 기준 적용 중 (${month}월 ${day}일)`;
-            banner.className = `season-info ${isCoolingSeason ? 'cooling-active' : 'normal-active'}`;
-        }
-
-        // [배기 30분/15분 기준 반영]
-        function analyzeValue(actual, target, stationName, equipType) {
-            if (stationName === "문양") return { status: 'ok', class: '' };
-            if (!actual || actual === '0' || actual === '-' || actual === '') return { status: 'critical', class: 'critical-val' };
-            
-            const h = parseToHours(actual);
-
-            if (equipType === 'exhaust') {
-                if (h >= 0.5) return { status: 'ok', class: '' }; // 30분 이상 OK
-                if (h <= 0.25) return { status: 'critical', class: 'critical-val' }; // 15분 이하 심각
-                return { status: 'warning', class: 'bad-val' }; // 그 사이 확인필요
-            }
-
-            if (h <= target * 0.5) return { status: 'critical', class: 'critical-val' };
-            if (h >= target - TOLERANCE && h <= target + TOLERANCE) return { status: 'ok', class: '' };
-            return { status: 'warning', class: 'bad-val' };
-        }
-
-        // --- 데이터 처리 및 통합 렌더링 엔진 ---
-        function processLine1(sheet) {
-            const finalData = [];
-            const activeRules = isCoolingSeason ? RULES_COOLING : RULES_NORMAL;
-            const range = XLSX.utils.decode_range(sheet['!ref']);
-
-            [4, 5].forEach(col => {
-                let name = (col === 4) ? "설화명곡" : "화원";
-                finalData.push(generateL1Obj(sheet, name, col, 81, 82, 89, 90, activeRules));
-            });
-            for (let col = 4; col <= range.e.c; col++) {
-                let rawName = cleanText(getCellValue(sheet, 0, col));
-                if (!rawName || ['합계','명곡','화원'].includes(rawName)) continue;
-                finalData.push(generateL1Obj(sheet, rawName, col, 5, 6, 13, 14, activeRules));
-            }
-            renderSplitTables(finalData, 'L1');
-        }
-
-        function processLine2(sheet) {
-            const range = XLSX.utils.decode_range(sheet['!ref']);
-            const finalData = [];
-            let current = null;
-            const activeRules = isCoolingSeason ? RULES_COOLING : RULES_NORMAL;
-
-            for (let r = 0; r <= range.e.r; r++) {
-                let label = cleanText(getCellValue(sheet, r, 0) + getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2));
-                let value = getCellValue(sheet, r, 4);
-                const found = LINE2_STATIONS.find(st => label.includes(st) && (label.includes("가동") || label.length < 15));
-                if (found) {
-                    if (current) finalData.push(generateL2Obj(current, activeRules));
-                    current = { name: found, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
-                    continue;
-                }
-                if (current && label.includes("승강")) {
-                    if (label.includes("급기")) { if (label.includes("좌") || label.includes("시점")) current.ls = value; else current.rs = value; }
-                    else if (label.includes("배기")) {
-                        const isL = label.includes("좌") || label.includes("시점");
-                        if (label.includes("상부")) { if (isL) current.lue = value; else current.rue = value; }
-                        else if (label.includes("하부")) { if (isL) current.lle = value; else current.rle = value; }
-                        else { if (isL) current.lue = value; else current.rue = value; }
-                    }
-                }
-            }
-            if (current) finalData.push(generateL2Obj(current, activeRules));
-            renderSplitTables(finalData, 'L2');
-        }
-
-        // 데이터 객체 생성 헬퍼
-        function generateL1Obj(sheet, name, col, lsR, leR, rsR, reR, rules) {
-            const type = L1_TYPES[name] || "default";
-            const target = rules[type] || rules["default"];
-            const raw = [getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col), getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)];
-            const res = [analyzeValue(raw[0], target.s, name, 'supply'), analyzeValue(raw[1], target.ue, name, 'exhaust'), analyzeValue(raw[2], target.s, name, 'supply'), analyzeValue(raw[3], target.ue, name, 'exhaust')];
-            const isAbnormal = res.some(r => r.status !== 'ok');
-            const worst = res.some(r => r.status === 'critical') ? 'danger' : 'warning';
-            return { name, target, raw, res, isAbnormal, worst };
-        }
-
-        function generateL2Obj(d, rules) {
-            const target = rules["default"];
-            const raw = [d.ls, d.lue, d.lle, d.rs, d.rue, d.rle];
-            const res = [analyzeValue(raw[0], target.s, d.name, 'supply'), analyzeValue(raw[1], target.ue, d.name, 'exhaust'), analyzeValue(raw[2], target.le, d.name, 'exhaust'), analyzeValue(raw[3], target.s, d.name, 'supply'), analyzeValue(raw[4], target.ue, d.name, 'exhaust'), analyzeValue(raw[5], target.le, d.name, 'exhaust')];
-            const isAbnormal = res.some(r => r.status !== 'ok');
-            const worst = res.some(r => r.status === 'critical') ? 'danger' : 'warning';
-            return { name: d.name, target, raw, res, isAbnormal, worst };
-        }
-
-        // [상단 요약 / 하단 전체 리스트 분리 렌더링]
-        function renderSplitTables(data, type) {
-            const abnormal = data.filter(d => d.isAbnormal);
-            const headers = type === 'L1' ? ['역사명', '기준', '시점급기', '시점배기', '종점급기', '종점배기', '판정'] : ['역사명', '기준', '시점급기', '시점상부', '시점하부', '종점급기', '종점상부', '종점하부', '판정'];
-
-            const buildTable = (list, title, isSummary) => {
-                if (list.length === 0 && isSummary) return "";
-                let html = `<div class="${isSummary ? 'summary-title' : 'full-list-title'}">${isSummary ? '⚠️ 이상 발생 역사 요약' : '📋 전체 점검 결과'}</div>`;
-                html += `<div class="table-container"><table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-                list.forEach(d => {
-                    let badge = `<span class="badge badge-${d.worst === 'danger' ? 'danger' : 'warning'}">${d.worst === 'danger' ? '심각(미가동)' : '확인필요'}</span>`;
-                    if (!d.isAbnormal) badge = `<span class="badge badge-success">정상</span>`;
-                    
-                    const targetStr = type === 'L1' ? `급${d.target.s}/배${d.target.ue}` : `급${d.target.s}/상${d.target.ue}/하${d.target.le}`;
-                    html += `<tr><td class="st-name">${d.name}</td><td style="font-size:0.7rem; color:#888">${targetStr}</td>`;
-                    d.raw.forEach((v, i) => { html += `<td class="${d.res[i].class}">${v || '0'}</td>`; });
-                    html += `<td>${badge}</td></tr>`;
-                });
-                html += `</tbody></table></div>`;
-                return html;
-            };
-
-            document.getElementById('summary-section').innerHTML = buildTable(abnormal, "", true) || `<div class="summary-title" style="color:var(--success)">✅ 모든 역사가 정상 가동 중입니다.</div>`;
-            document.getElementById('full-list-section').innerHTML = buildTable(data, "", false);
-        }
-
-        function getCellValue(sheet, row, col) { const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})]; return cell ? (cell.t === 'n' && !cell.w ? cell.v : cell.w || cell.v) : ""; }
-        const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
-        const parseToHours = (val) => { if(!val) return 0; if(typeof val === 'number') return val * 24; const p = String(val).split(':'); return p.length < 2 ? parseFloat(val)||0 : parseInt(p[0]) + (parseInt(p[1])/60); };
-    </script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
