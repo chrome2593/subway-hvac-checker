@@ -3,25 +3,26 @@ const CONFIG = {
         COOLING_START: { month: 7, day: 1 },
         COOLING_END: { month: 9, day: 20 }
     },
-    TOLERANCE: 40 / 60, // 급기 오차 40분 (0.66h)
+    TOLERANCE: 40 / 60, // 급기 오차 40분
 
     // [비냉방 시즌 기준]
     RULES_NORMAL: {
-        "type1": { s: 17, ue: 1, le: 0.5 },
-        "type2": { s: 15, ue: 1, le: 0.5 },
-        "type3": { s: 15.5, ue: 1, le: 0.5 },
-        "default": { s: 16.5, ue: 1, le: 0.5 }
+        "type1": { s: 17, ue: 1, le: 0.5 },    // 급 17, 배 1
+        "type2": { s: 15, ue: 1, le: 0.5 },    // 급 15, 배 1
+        "type3": { s: 15.5, ue: 1, le: 0.5 },  // 급 15.5, 배 1
+        "default": { s: 16.5, ue: 1, le: 0.5 } // 급 16.5, 배 1
     },
+
     // [냉방 시즌 기준]
     RULES_COOLING: {
-        "type1": { s: 12, ue: 0.5, le: 0.5 },
-        "type2": { s: 9, ue: 0.5, le: 0.5 },
-        "default": { s: 9, ue: 0.5, le: 0.5 }
+        "type1": { s: 12, ue: 0.5, le: 0.5 },  // 급 12, 배 0.5
+        "type2": { s: 9, ue: 0.5, le: 0.5 },   // 급 9, 배 0.5
+        "default": { s: 9, ue: 0.5, le: 0.5 }  // 급 9, 배 0.5
     },
 
     // 역사별 유형 매핑
     STATION_MAP: {
-        "명덕": "type1", "청라언덕": "type1", "반월당": "type1", // 2호선 반월당 포함
+        "명덕": "type1", "청라언덕": "type1", "반월당(2호선)": "type1", "반월당": "type1",
         "현충로": "type2", "중앙로": "type2", "안심": "type2", "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2",
         "반월당(1호선)": "type3"
     },
