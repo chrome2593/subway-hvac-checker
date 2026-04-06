@@ -2,79 +2,102 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>승강장 공조기 가동 점검 시스템</title>
+    <title>승강장 공조기 가동 점검 - 대구교통공사</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* 대구교통공사 보고서 스타일의 깔끔한 디자인 */
-        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background-color: #f4f4f4; }
-        .mismatch { background-color: #ffdddd; color: #d00; font-weight: bold; } /* 불일치 시 강조 */
+        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .upload-box { margin: 20px 0; padding: 20px; border: 2px dashed #3498db; text-align: center; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #3498db; color: white; position: sticky; top: 0; }
+        .mismatch { background-color: #ffebed; color: #c0392b; font-weight: bold; } /* 기준 미달 시 표시 */
+        .header-row { background-color: #f9f9f9; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>승강장 공조기 가동 현황 점검</h2>
-        <p>일보 데이터를 전체 복사하여 붙여넣거나 파일을 선택하세요.</p>
-        
-        <input type="file" id="excelInput" accept=".xlsx, .xls" />
-        <div id="resultArea"></div>
+        <h2>승강장 공조기 가동 실적 자동 점검</h2>
+        <div class="upload-box">
+            <p>매일 생성되는 <strong>일보 엑셀 파일</strong>을 선택하세요.</p>
+            <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        </div>
+        <div id="resultTable"></div>
     </div>
 
     <script>
-        // 1. 명칭 사전 (역사별로 다른 이름을 하나로 통일)
-        const NAME_MAP = {
-            "반월당_승강장급기1": "시점_급기",
-            "반월당_승강장배기1": "시점_배기",
-            "중앙로_급기팬": "시점_급기",
-            // 이곳에 60개 역사의 다양한 명칭을 추가하면 됩니다.
+        // --- [설정] 역사별 기준 스케줄 (필요에 따라 수정하세요) ---
+        const SCHEDULE_SET = {
+            "default": { start: "05:30", end: "23:30" }, // 기본값
+            "반월당": { start: "05:00", end: "24:00" }   // 특정 역사 예시
         };
 
-        // 2. 표준 스케줄 (기준치)
-        const SCHEDULE = {
-            "시점_급기": { start: "05:30", end: "23:30" },
-            "시점_배기": { start: "05:30", end: "23:30" },
-        };
-
-        document.getElementById('excelInput').addEventListener('change', function(e) {
+        document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
 
             reader.onload = function(evt) {
                 const data = evt.target.result;
                 const workbook = XLSX.read(data, { type: 'binary' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet);
+                const sheetName = workbook.SheetNames[0]; // 첫 번째 시트 선택
+                const sheet = workbook.Sheets[sheetName];
 
-                renderTable(rows);
+                processSubwayData(sheet);
             };
             reader.readAsBinaryString(file);
         });
 
-        function renderTable(data) {
-            let html = `<table><tr><th>역사명</th><th>기기명(원문)</th><th>표준구분</th><th>가동상태</th><th>결과</th></tr>`;
+        function processSubwayData(sheet) {
+            // E열(Index 4)부터 역사 이름이 시작됨
+            // 6, 7행 (Index 5, 6), 14, 15행 (Index 13, 14) 데이터 추출
             
-            data.forEach(row => {
-                const rawName = row['장비명']; // 엑셀의 컬럼명에 맞게 수정 필요
-                const standardName = NAME_MAP[rawName] || "미등록기기";
-                const schedule = SCHEDULE[standardName];
-                
-                // 실제 가동시간과 스케줄 비교 로직
-                const isMatch = schedule && (row['시작'] === schedule.start); 
-                const statusClass = isMatch ? "" : "mismatch";
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            let html = `<table>
+                <tr>
+                    <th>역사명</th>
+                    <th>구분</th>
+                    <th>좌측 급기(6행)</th>
+                    <th>좌측 배기(7행)</th>
+                    <th>우측 급기(14행)</th>
+                    <th>우측 배기(15행)</th>
+                    <th>판정</th>
+                </tr>`;
+
+            // E열(4)부터 데이터가 끝나는 열까지 반복
+            for (let col = 4; col <= range.e.c; col++) {
+                const stationName = getCellValue(sheet, 0, col); // 1행의 역사명
+                if (!stationName || stationName === '합 계') continue;
+
+                // 각 셀의 값 가져오기
+                const leftSupply = getCellValue(sheet, 5, col);  // 6행
+                const leftExhaust = getCellValue(sheet, 6, col); // 7행
+                const rightSupply = getCellValue(sheet, 13, col); // 14행
+                const rightExhaust = getCellValue(sheet, 14, col); // 15행
+
+                // 간단한 가동 여부 판정 (값이 있으면 정상, 없으면 미가동)
+                const isAllRunning = leftSupply && leftExhaust && rightSupply && rightExhaust;
+                const statusClass = isAllRunning ? "" : "mismatch";
 
                 html += `<tr class="${statusClass}">
-                    <td>${row['역사'] || '-'}</td>
-                    <td>${rawName}</td>
-                    <td>${standardName}</td>
-                    <td>${row['시작'] || '미가동'} ~ ${row['종료'] || ''}</td>
-                    <td>${isMatch ? "정상" : "확인필요"}</td>
+                    <td class="header-row">${stationName}</td>
+                    <td>가동시간</td>
+                    <td>${leftSupply || '-'}</td>
+                    <td>${leftExhaust || '-'}</td>
+                    <td>${rightSupply || '-'}</td>
+                    <td>${rightExhaust || '-'}</td>
+                    <td>${isAllRunning ? "정상" : "점검필요"}</td>
                 </tr>`;
-            });
+            }
             html += `</table>`;
-            document.getElementById('resultArea').innerHTML = html;
+            document.getElementById('resultTable').innerHTML = html;
+        }
+
+        // 셀 좌표(Row, Col)를 입력받아 값을 반환하는 도우미 함수
+        function getCellValue(sheet, row, col) {
+            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+            const cell = sheet[cellAddress];
+            return cell ? cell.v : null;
         }
     </script>
 </body>
