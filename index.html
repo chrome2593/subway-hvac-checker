@@ -14,37 +14,29 @@
         }
         body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
         .container { max-width: 1500px; margin: 0 auto; }
-        
         #main-menu { display: flex; gap: 30px; justify-content: center; align-items: center; min-height: 70vh; }
         .menu-card { background: white; width: 280px; padding: 50px 20px; border-radius: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); cursor: pointer; transition: 0.4s; border-bottom: 8px solid #ccc; }
         .menu-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
         .menu-card.line1 { border-color: var(--line1-color); }
         .menu-card.line2 { border-color: var(--line2-color); }
-
         .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
         .back-btn { cursor: pointer; padding: 10px 18px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-weight: bold; }
-        
         .card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
         .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; }
-        
         .season-info { padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; display: none; font-size: 1.1rem; }
-        .cooling-active { background-color: #e0f2fe; color: var(--cooling-color); border: 1px solid var(--cooling-color); display: block !important; }
+        .cooling-active { background-color: #e0f2fe; color: var(--cooling-color); border: 2px solid var(--cooling-color); display: block !important; }
         .normal-active { background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e0; display: block !important; }
-
         .table-container { background: white; border-radius: 16px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; text-align: center; min-width: 1200px; }
         th { background-color: #f8fafc; padding: 15px 10px; border-bottom: 2px solid var(--border); font-size: 0.85rem; color: #64748b; }
         td { padding: 14px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .st-name { font-weight: 800; color: var(--primary-blue); background-color: #f0f7ff; position: sticky; left: 0; z-index: 5; }
-
         .badge { display: inline-block; padding: 6px 14px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
         .badge-success { background-color: #def7ec; color: var(--success); }
         .badge-warning { background-color: #fef3c7; color: var(--warning); }
         .badge-danger { background-color: #fee2e2; color: var(--danger); border: 1px solid var(--danger); }
-
         .bad-val { background: #fffbeb; color: var(--warning); font-weight: bold; }
         .critical-val { background: #fef2f2 !important; color: var(--danger) !important; font-weight: 900 !important; border: 2px solid #fca5a5 !important; }
-        
         .hidden { display: none; }
     </style>
 </head>
@@ -71,7 +63,7 @@
             <div class="card">
                 <div class="upload-area" onclick="document.getElementById('excelFile').click()">
                     <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">일보 엑셀 업로드</span>
-                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">반드시 <strong>'승강장'</strong> 공조기 데이터만 추출합니다.</p>
+                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">장비명 자동 인식 (문양 예외 처리 완료)</p>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
                 </div>
             </div>
@@ -87,11 +79,7 @@
         const RULES_NORMAL = { "type1": { s: 17, ue: 1, le: 0.5 }, "type2": { s: 15, ue: 1, le: 0.5 }, "type3": { s: 15.5, ue: 1, le: 0.5 }, "default": { s: 16.5, ue: 1, le: 0.5 } };
         const RULES_COOLING = { "type1": { s: 12, ue: 0.5, le: 0.5 }, "type2": { s: 9, ue: 0.5, le: 0.5 }, "default": { s: 9, ue: 0.5, le: 0.5 } };
 
-        const L1_TYPES = {
-            "화원": "type1", "반야월": "type1", "각산": "type1", 
-            "대곡": "type2", "월촌": "type2", "송현": "type2", "교대": "type2", "명덕": "type2", "동구청": "type2", "방촌": "type2", "용계": "type2", "율하": "type2", "신기": "type2",
-            "반월당": "type3"
-        };
+        const L1_TYPES = { "화원": "type1", "반야월": "type1", "각산": "type1", "대곡": "type2", "월촌": "type2", "송현": "type2", "교대": "type2", "명덕": "type2", "동구청": "type2", "방촌": "type2", "용계": "type2", "율하": "type2", "신기": "type2", "반월당": "type3" };
         const LINE2_STATIONS = ["문양", "다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
 
         function showView(line) {
@@ -117,10 +105,8 @@
                 const workbook = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
                 const sheetName = workbook.SheetNames.find(n => n.includes("장비")) || workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                
                 let dateFromFileName = file.name.replace(/[^0-9]/g, "").substring(0, 8);
                 determineSeason(sheet, dateFromFileName);
-
                 if(currentLine === 'line1') processLine1(sheet);
                 else processLine2(sheet);
             };
@@ -144,7 +130,9 @@
             banner.className = `season-info ${isCoolingSeason ? 'cooling-active' : 'normal-active'}`;
         }
 
-        function analyzeValue(actual, target) {
+        // [수정] 문양역은 가동 시간이 0이어도 항상 'ok' 판정
+        function analyzeValue(actual, target, stationName) {
+            if (stationName === "문양") return { status: 'ok', class: '' };
             if (!actual || actual === '0' || actual === '-' || actual === '') return { status: 'critical', class: 'critical-val' };
             const h = parseToHours(actual);
             if (h <= target * 0.5) return { status: 'critical', class: 'critical-val' };
@@ -152,7 +140,7 @@
             return { status: 'warning', class: 'bad-val' };
         }
 
-        // --- [2호선 수정: '승강' 키워드 필수 조건 추가] ---
+        // [2호선 엔진] 다사·대실역 "배기" 통합 맵핑 로직 추가
         function processLine2(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const finalResults = [];
@@ -172,18 +160,21 @@
                     continue;
                 }
 
-                if (currentData) {
-                    // [핵심] '승강' 단어가 반드시 포함되어야 '대합실' 등과 섞이지 않음
-                    if (label.includes("승강")) {
-                        if (label.includes("급기")) {
-                            if (label.includes("좌") || label.includes("시점")) currentData.ls = value; 
-                            else if (label.includes("우") || label.includes("종점")) currentData.rs = value;
-                        } else if (label.includes("상부배기")) {
-                            if (label.includes("좌") || label.includes("시점")) currentData.lue = value;
-                            else if (label.includes("우") || label.includes("종점")) currentData.rue = value;
-                        } else if (label.includes("하부배기")) {
-                            if (label.includes("좌") || label.includes("시점")) currentData.lle = value;
-                            else if (label.includes("우") || label.includes("종점")) currentData.rle = value;
+                if (currentData && label.includes("승강")) {
+                    if (label.includes("급기")) {
+                        if (label.includes("좌") || label.includes("시점")) currentData.ls = value; 
+                        else if (label.includes("우") || label.includes("종점")) currentData.rs = value;
+                    } 
+                    // 배기 검색 로직 강화
+                    else if (label.includes("배기")) {
+                        const isLeft = label.includes("좌") || label.includes("시점");
+                        if (label.includes("상부")) {
+                            if (isLeft) currentData.lue = value; else currentData.rue = value;
+                        } else if (label.includes("하부")) {
+                            if (isLeft) currentData.lle = value; else currentData.rle = value;
+                        } else {
+                            // "상부/하부" 단어가 없으면 "상부" 칸으로 맵핑 (다사, 대실 케이스)
+                            if (isLeft) currentData.lue = value; else currentData.rue = value;
                         }
                     }
                 }
@@ -194,7 +185,10 @@
 
         function formatRowL2(d, rules) {
             const target = rules["default"];
-            const res = [analyzeValue(d.ls, target.s), analyzeValue(d.lue, target.ue), analyzeValue(d.lle, target.le), analyzeValue(d.rs, target.s), analyzeValue(d.rue, target.ue), analyzeValue(d.rle, target.le)];
+            const res = [
+                analyzeValue(d.ls, target.s, d.name), analyzeValue(d.lue, target.ue, d.name), analyzeValue(d.lle, target.le, d.name),
+                analyzeValue(d.rs, target.s, d.name), analyzeValue(d.rue, target.ue, d.name), analyzeValue(d.rle, target.le, d.name)
+            ];
             const isCritical = res.some(r => r.status === 'critical');
             const isWarning = res.some(r => r.status === 'warning');
             let badge = '<span class="badge badge-success">정상</span>';
@@ -209,7 +203,6 @@
             document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>최종판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
 
-        // --- 1호선 로직 ---
         function processLine1(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const finalResults = [];
@@ -230,13 +223,12 @@
             const type = L1_TYPES[name] || "default";
             const target = rules[type] || rules["default"];
             const raw = [getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col), getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)];
-            const res = [analyzeValue(raw[0], target.s), analyzeValue(raw[1], target.ue), analyzeValue(raw[2], target.s), analyzeValue(raw[3], target.ue)];
+            const res = [analyzeValue(raw[0], target.s, name), analyzeValue(raw[1], target.ue, name), analyzeValue(raw[2], target.s, name), analyzeValue(raw[3], target.ue, name)];
             const isCritical = res.some(r => r.status === 'critical');
             const isWarning = res.some(r => r.status === 'warning');
             let badge = '<span class="badge badge-success">정상</span>';
             if (isCritical) badge = '<span class="badge badge-danger">심각</span>';
             else if (isWarning) badge = '<span class="badge badge-warning">확인필요</span>';
-
             const td = (val, r) => `<td class="${r.class}">${val || '0'}</td>`;
             return `<tr><td class="st-name">${name}</td><td style="font-size:0.75rem; color:#888">급${target.s}/배${target.ue}</td>${td(raw[0], res[0])}${td(raw[1], res[1])}${td(raw[2], res[2])}${td(raw[3], res[3])}<td>${badge}</td></tr>`;
         }
@@ -244,7 +236,6 @@
         function getCellValue(sheet, row, col) { const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})]; return cell ? (cell.t === 'n' && !cell.w ? cell.v : cell.w || cell.v) : ""; }
         const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
         const parseToHours = (val) => { if(!val) return 0; if(typeof val === 'number') return val * 24; const p = String(val).split(':'); return p.length < 2 ? parseFloat(val)||0 : parseInt(p[0]) + (parseInt(p[1])/60); };
-        const checkRange = (value, target) => (value >= target - TOLERANCE) && (value <= target + TOLERANCE);
     </script>
 </body>
 </html>
