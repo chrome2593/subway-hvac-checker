@@ -6,31 +6,23 @@ function showApp() {
 }
 
 function goBack() {
-    const mainContent = document.getElementById('main-content');
-    const lineSelector = document.getElementById('line-selector');
-    if (!mainContent.classList.contains('hidden')) {
-        mainContent.classList.add('hidden');
-        lineSelector.classList.remove('hidden');
-        document.getElementById('line-indicator').innerText = '노선을 선택하십시오';
-        document.getElementById('summary-area').innerHTML = '';
-        document.getElementById('full-list-area').innerHTML = '';
-        document.getElementById('excelFile').value = '';
-    } else {
-        location.reload(); 
-    }
-}
-
-function selectLine(line) {
-    currentLine = line;
-    document.getElementById('line-selector').classList.add('hidden');
-    document.getElementById('main-content').classList.remove('hidden');
-    document.getElementById('line-indicator').innerText = line === 'line1' ? '🔵 1호선 가동일보 분석' : '🟢 2호선 가동일보 분석';
+    location.reload(); // 즉시 메인으로 새로고침
 }
 
 document.getElementById('excelFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if(!file) return;
     currentFileName = file.name;
+    
+    // [자동 호선 감지 로직]
+    if (currentFileName.includes("일보")) {
+        currentLine = 'line2';
+        document.getElementById('line-indicator').innerText = '🟢 2호선 가동일보 분석 중';
+    } else {
+        currentLine = 'line1';
+        document.getElementById('line-indicator').innerText = '🔵 1호선 가동일보 분석 중';
+    }
+
     const reader = new FileReader();
     reader.onload = (evt) => {
         currentWorkbook = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
@@ -42,11 +34,14 @@ document.getElementById('excelFile').addEventListener('change', function(e) {
 function runIntegratedAnalysis(wb) {
     let dateKey = currentFileName.replace(/[^0-9]/g, "").substring(0, 8);
     let m = parseInt(dateKey.substring(4, 6)), d = parseInt(dateKey.substring(6, 8));
-    if(isNaN(m)) {
+    
+    // 날짜 감지 실패 시 엑셀 내부 셀 확인
+    if(isNaN(m) || m === 0) {
         const testSheet = wb.Sheets[wb.SheetNames[0]];
         const dv = testSheet['C2'] ? testSheet['C2'].v : null;
         if(dv instanceof Date) { m = dv.getMonth()+1; d = dv.getDate(); }
     }
+    
     isCooling = (m === 7 || m === 8 || (m === 9 && d <= 20));
     
     const banner = document.getElementById('season-banner');
@@ -62,7 +57,7 @@ function runIntegratedAnalysis(wb) {
     renderAll(hvacData, airData);
 }
 
-// 판정 로직 (기존과 동일)
+// 판정 로직
 function analyze(val, target, station, type, isAir = false) {
     if (station === "문양") return { s: 'ok', c: '' };
     if (!val || val === '0' || val === '-' || val === '') return { s: 'critical', c: 'critical-val' };
@@ -81,6 +76,7 @@ function analyze(val, target, station, type, isAir = false) {
     return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
 }
 
+// 렌더링
 function renderAll(hvac, air) {
     const hvacCri = hvac.filter(d => d.isCri);
     const airCri = air.filter(d => d.isCri);
@@ -107,11 +103,12 @@ function renderAll(hvac, air) {
     }
     document.getElementById('summary-area').innerHTML = sumHtml;
 
-    let fullHtml = `<div class="section-title">📊 승강장 공조기 분석 결과</div>` + buildHVACTable(hvac);
-    fullHtml += `<div class="section-title" style="margin-top:60px;">🌬️ 공기청정기 분석 결과</div>` + buildAirTable(air);
+    let fullHtml = `<div class="section-title">승강장 공조기 분석 결과</div>` + buildHVACTable(hvac);
+    fullHtml += `<div class="section-title">공기청정기 분석 결과</div>` + buildAirTable(air);
     document.getElementById('full-list-area').innerHTML = fullHtml;
 }
 
+// 시간 포맷터
 function formatToHMS(val) {
     if (!val || val === '0' || val === 0 || val === '-') return "0:00:00";
     let totalSeconds;
@@ -151,7 +148,7 @@ function buildAirTable(data) {
     return h + `</tbody></table></div>`;
 }
 
-// 추출 헬퍼 (기존 로직 유지)
+// 추출 헬퍼 (기존 유지)
 function getL1HVAC(sheet) {
     const data = []; const rules = isCooling ? CONFIG.RULES_COOLING : CONFIG.RULES_NORMAL;
     [4, 5].forEach(col => { let name = (col === 4) ? "설화명곡" : "화원"; data.push(getL1HVAC_Obj(sheet, name, col, 81, 82, 89, 90, rules)); });
@@ -220,6 +217,7 @@ function getAirPurifierData(sheet) {
     }
     return data;
 }
+
 function getL1HVAC_Obj(sheet, n, c, ls, le, rs, re, rules) {
     const type = CONFIG.STATION_MAP[n] || "default"; const target = rules[type] || rules["default"];
     const raw = [getCV(sheet, ls, c), getCV(sheet, le, c), getCV(sheet, rs, c), getCV(sheet, re, c)];
