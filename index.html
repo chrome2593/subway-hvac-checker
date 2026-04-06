@@ -12,7 +12,6 @@
         <div class="hero-content">
             <div class="corp-tag">DAEGU TRANSPORTATION CORP.</div>
             <h1>1·2호선 가동일보 분석</h1>
-            <p style="margin-bottom:40px; color:#64748b; font-weight:500;">가동일보를 업로드하여 승강장 공조기와 공기청정기를 자동 점검하세요.</p>
             <button class="main-start-btn" onclick="showApp()">분석 시작</button>
         </div>
     </div>
@@ -22,7 +21,7 @@
             <div class="container header-inner">
                 <button class="back-btn" onclick="goBack()">← 뒤로가기</button>
                 <div id="line-indicator" class="line-badge">파일을 업로드 해주십시오</div>
-                <div style="width:80px;"></div>
+                <div style="width:100px;"></div>
             </div>
         </header>
 
@@ -30,12 +29,11 @@
             <section id="main-content" style="margin-top: 40px;">
                 <div id="season-banner" class="season-info" style="display:none;"></div>
                 
-                <div class="upload-box" onclick="document.getElementById('excelFile').click()">
+                <div id="upload-container" class="upload-box" onclick="document.getElementById('excelFile').click()">
                     <input type="file" id="excelFile" hidden />
-                    <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
+                    <div class="upload-icon" style="font-size: 4rem; margin-bottom: 20px;">📄</div>
                     <h3 style="margin:0; color: var(--primary); font-size: 1.6rem;">가동일보 파일 업로드</h3>
                     <p style="color:#64748b; margin-top:15px; font-weight: 600; font-size: 1.1rem;">드림스 가동일보 드래그 앤 드롭</p>
-                    <p style="color:#94a3b8; font-size: 0.9rem; margin-top: 10px;">1호선(YYYYMMDD) 및 2호선(일보YYYYMMDD) 파일 자동 구분</p>
                 </div>
                 
                 <div id="summary-area"></div>
