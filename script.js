@@ -5,25 +5,19 @@ function showApp() {
     document.getElementById('app-view').classList.remove('hidden'); 
 }
 
-// [뒤로가기 로직 개선]
 function goBack() {
     const mainContent = document.getElementById('main-content');
     const lineSelector = document.getElementById('line-selector');
-
     if (!mainContent.classList.contains('hidden')) {
-        // 분석 화면 -> 호선 선택 화면으로
         mainContent.classList.add('hidden');
         lineSelector.classList.remove('hidden');
         document.getElementById('line-indicator').innerText = '노선을 선택하십시오';
         document.getElementById('summary-area').innerHTML = '';
         document.getElementById('full-list-area').innerHTML = '';
     } else {
-        // 호선 선택 화면 -> 메인 첫 화면으로
         location.reload(); 
     }
 }
-
-function showHome() { location.reload(); }
 
 function selectLine(line) {
     currentLine = line;
@@ -44,7 +38,6 @@ document.getElementById('excelFile').addEventListener('change', function(e) {
     reader.readAsBinaryString(file);
 });
 
-// [통합 분석 엔진]
 function runIntegratedAnalysis(wb) {
     let dateKey = currentFileName.replace(/[^0-9]/g, "").substring(0, 8);
     let m = parseInt(dateKey.substring(4, 6)), d = parseInt(dateKey.substring(6, 8));
@@ -54,19 +47,15 @@ function runIntegratedAnalysis(wb) {
     banner.style.display = 'block';
     banner.innerHTML = `현재 적용 기준: <strong>${isCooling ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'}</strong> (${m || '?'}월 ${d || '?'}일 기준)`;
 
-    // 1. 공조기 데이터 추출
     const hvacSheet = wb.Sheets[wb.SheetNames.find(n => n.includes("장비")) || wb.SheetNames[0]];
     const hvacData = (currentLine === 'line1') ? getL1HVAC(hvacSheet) : getL2HVAC(hvacSheet);
 
-    // 2. 공기청정기 데이터 추출
     const airSheet = wb.Sheets[wb.SheetNames.find(n => n.includes("공기청정기")) || wb.SheetNames[0]];
     const airData = getAirPurifierData(airSheet);
 
-    // 3. 통합 요약 및 결과 렌더링
     renderAll(hvacData, airData);
 }
 
-// --- [공용 분석 로직] ---
 function analyze(val, target, station, type, isAir = false) {
     if (station === "문양") return { s: 'ok', c: '' };
     if (!val || val === '0' || val === '-' || val === '') return { s: 'critical', c: 'critical-val' };
@@ -85,13 +74,82 @@ function analyze(val, target, station, type, isAir = false) {
     return (h >= target - CONFIG.TOLERANCE && h <= target + CONFIG.TOLERANCE) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
 }
 
-// --- [추출 로직들] ---
+// --- [렌더링 엔진: 상세 요약 기능 강화] ---
+function renderAll(hvac, air) {
+    // 1. 심각(Critical) 항목만 필터링 (확인필요 제외)
+    const hvacCri = hvac.filter(d => d.isCri);
+    const airCri = air.filter(d => d.isCri);
+
+    const hvacLabels = currentLine === 'line1' 
+        ? ["시점급기", "시점배기", "종점급기", "종점배기"]
+        : ["시점급기", "시점상부", "시점하부", "종점급기", "종점상부", "종점하부"];
+
+    let sumHtml = `<div class="summary-container"><div class="summary-section-title">⚠️ 통합 이상 내역 요약 (심각 항목만 표시)</div>`;
+    
+    if (hvacCri.length === 0 && airCri.length === 0) {
+        sumHtml = `<div class="summary-container" style="border-color:var(--success); border-left-color:var(--success); background:#f0fdf4;">
+                    <div class="summary-section-title" style="color:var(--success); border-bottom-color:#dcfce7;">✅ 모든 장비가 정상 가동 중입니다.</div>
+                   </div>`;
+    } else {
+        // 승강장 공조기 심각 요약
+        if (hvacCri.length > 0) {
+            sumHtml += `<div style="margin-bottom:25px;"><strong>[승강장 공조기]</strong><div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">`;
+            hvacCri.forEach(d => {
+                d.res.forEach((r, idx) => {
+                    if (r.s === 'critical') {
+                        sumHtml += `<span class="badge badge-danger">${d.name} ${hvacLabels[idx]} (${d.raw[idx] || '0'})</span>`;
+                    }
+                });
+            });
+            sumHtml += `</div></div>`;
+        }
+        // 공기청정기 심각 요약
+        if (airCri.length > 0) {
+            sumHtml += `<div><strong>[공기청정기]</strong><div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">`;
+            airCri.forEach(d => {
+                d.units.forEach(u => {
+                    if (u.res.s === 'critical') {
+                        sumHtml += `<span class="badge badge-danger">${d.name} ${u.label} (${u.val})</span>`;
+                    }
+                });
+            });
+            sumHtml += `</div></div>`;
+        }
+        sumHtml += `</div>`;
+    }
+    document.getElementById('summary-area').innerHTML = sumHtml;
+
+    // 2. 전체 상세 리스트
+    let fullHtml = `<div class="section-title">📊 승강장 공조기 상세 결과</div>` + buildHVACTable(hvac);
+    fullHtml += `<div class="section-title" style="margin-top:60px;">🌬️ 공기청정기 상세 결과</div>` + buildAirTable(air);
+    document.getElementById('full-list-area').innerHTML = fullHtml;
+}
+
+function buildHVACTable(data) {
+    const headers = currentLine === 'line1' ? ['역사명', '시점급기', '시점배기', '종점급기', '종점배기', '판정'] : ['역사명', '시점급기', '시점상부', '시점하부', '종점급기', '종점상부', '종점하부', '판정'];
+    let h = `<div class="table-wrapper"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
+    data.forEach(d => {
+        h += `<tr><td class="st-name">${d.name}</td>`;
+        d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${v || '0'}</td>`; });
+        h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'확인필요':'정상')}</span></td></tr>`;
+    });
+    return h + `</tbody></table></div>`;
+}
+
+function buildAirTable(data) {
+    let h = `<div class="table-wrapper"><table><thead><tr><th style="width:140px;">역사명</th><th>장비 상세 현황</th><th style="width:100px;">판정</th></tr></thead><tbody>`;
+    data.forEach(d => {
+        h += `<tr><td class="st-name">${d.name}</td><td><div class="units-grid">`;
+        d.units.forEach(u => { h += `<div class="unit-box ${u.res.c}"><strong>${u.label}</strong>${u.val}</div>`; });
+        h += `</div></td><td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isAb?'이상':'정상'}</span></td></tr>`;
+    });
+    return h + `</tbody></table></div>`;
+}
+
+// --- [추출 로직: 1호선/2호선] ---
 function getL1HVAC(sheet) {
     const data = []; const rules = isCooling ? CONFIG.RULES_COOLING : CONFIG.RULES_NORMAL;
-    [4, 5].forEach(col => {
-        let name = (col === 4) ? "설화명곡" : "화원";
-        data.push(getL1HVAC_Obj(sheet, name, col, 81, 82, 89, 90, rules));
-    });
+    [4, 5].forEach(col => { let name = (col === 4) ? "설화명곡" : "화원"; data.push(getL1HVAC_Obj(sheet, name, col, 81, 82, 89, 90, rules)); });
     const range = XLSX.utils.decode_range(sheet['!ref']);
     for (let c = 4; c <= range.e.c; c++) {
         let n = cleanText(getCV(sheet, 0, c));
@@ -160,66 +218,6 @@ function getAirPurifierData(sheet) {
     return data;
 }
 
-// --- [렌더링 엔진] ---
-function renderAll(hvac, air) {
-    const hvacAb = hvac.filter(d => d.isAb);
-    const airAb = air.filter(d => d.isAb);
-
-    // 1. 통합 요약 영역
-    let sumHtml = `<div class="summary-container"><div class="summary-section-title">⚠️ 통합 이상 내역 요약</div>`;
-    
-    if (hvacAb.length === 0 && airAb.length === 0) {
-        sumHtml = `<div class="summary-container" style="border-color:var(--success); border-left-color:var(--success); background:#f0fdf4;">
-                    <div class="summary-section-title" style="color:var(--success); border-bottom-color:#dcfce7;">✅ 모든 장비가 정상입니다.</div>
-                   </div>`;
-    } else {
-        // 공조기 요약
-        if (hvacAb.length > 0) {
-            sumHtml += `<div style="margin-bottom:20px;"><strong>[플랫폼 공조기]</strong><br>`;
-            hvacAb.forEach(d => { sumHtml += `<span class="badge badge-danger" style="margin:4px;">${d.name}</span>`; });
-            sumHtml += `</div>`;
-        }
-        // 공기청정기 요약
-        if (airAb.length > 0) {
-            sumHtml += `<div><strong>[공기청정기]</strong><br>`;
-            airAb.forEach(d => {
-                const badUnits = d.units.filter(u => u.res.s !== 'ok');
-                badUnits.forEach(u => { sumHtml += `<span class="badge badge-warning" style="margin:4px;">${d.name} ${u.label}</span>`; });
-            });
-            sumHtml += `</div>`;
-        }
-        sumHtml += `</div>`;
-    }
-    document.getElementById('summary-area').innerHTML = sumHtml;
-
-    // 2. 전체 리스트 영역
-    let fullHtml = `<div class="section-title">📊 플랫폼 공조기 상세 결과</div>` + buildHVACTable(hvac);
-    fullHtml += `<div class="section-title" style="margin-top:60px;">🌬️ 공기청정기 상세 결과</div>` + buildAirTable(air);
-    document.getElementById('full-list-area').innerHTML = fullHtml;
-}
-
-function buildHVACTable(data) {
-    const headers = currentLine === 'line1' ? ['역사명', '시점급기', '시점배기', '종점급기', '종점배기', '판정'] : ['역사명', '시점급기', '시점상부', '시점하부', '종점급기', '종점상부', '종점하부', '판정'];
-    let h = `<div class="table-wrapper"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
-    data.forEach(d => {
-        h += `<tr><td class="st-name">${d.name}</td>`;
-        d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${v || '0'}</td>`; });
-        h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'확인필요':'정상')}</span></td></tr>`;
-    });
-    return h + `</tbody></table></div>`;
-}
-
-function buildAirTable(data) {
-    let h = `<div class="table-wrapper"><table><thead><tr><th style="width:140px;">역사명</th><th>장비 상세 현황</th><th style="width:100px;">판정</th></tr></thead><tbody>`;
-    data.forEach(d => {
-        h += `<tr><td class="st-name">${d.name}</td><td><div class="units-grid">`;
-        d.units.forEach(u => { h += `<div class="unit-box ${u.res.c}"><strong>${u.label}</strong>${u.val}</div>`; });
-        h += `</div></td><td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isAb?'이상':'정상'}</span></td></tr>`;
-    });
-    return h + `</tbody></table></div>`;
-}
-
-// [헬퍼]
 function getL1HVAC_Obj(sheet, n, c, ls, le, rs, re, rules) {
     const type = CONFIG.STATION_MAP[n] || "default"; const target = rules[type] || rules["default"];
     const raw = [getCV(sheet, ls, c), getCV(sheet, le, c), getCV(sheet, rs, c), getCV(sheet, re, c)];
