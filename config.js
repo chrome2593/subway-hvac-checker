@@ -3,8 +3,9 @@ const CONFIG = {
         COOLING_START: { month: 7, day: 1 },
         COOLING_END: { month: 9, day: 20 }
     },
-    TOLERANCE: 40 / 60, 
+    TOLERANCE: 40 / 60, // 공조기 급기 오차 40분
 
+    // [승강장 공조기 기준]
     RULES_NORMAL: {
         "type1": { s: 17, ue: 1, le: 0.5 },
         "type2": { s: 15, ue: 1, le: 0.5 },
@@ -17,9 +18,9 @@ const CONFIG = {
         "default": { s: 9, ue: 0.5, le: 0.5 }
     },
 
-    // [공기청정기 기준 업데이트]
+    // [공기청정기 기준] - 14시간 이상은 무조건 정상
     AIR_PURIFIER_STD: 17,      
-    AIR_PURIFIER_LIMIT: 14,    // 14시간 이상이면 무조건 '정상' (이전: 확인필요)
+    AIR_PURIFIER_LIMIT: 14,    
 
     L1_STATIONS_PURIFIER: [
         "대곡", "진천", "월배", "상인", "월촌", "송현", "서부정류장", "대명", "안지랑", "현충로", 
