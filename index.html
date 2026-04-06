@@ -10,7 +10,7 @@
             --line1-color: #d93d3d; --line2-color: #00aa4c; --primary-blue: #0054a6;
             --bg-color: #f4f7fa; --card-bg: #ffffff; --text-main: #2d3748;
             --success: #38a169; --danger: #e53e3e; --border: #e2e8f0;
-            --cooling-color: #0099ff; /* 냉방시즌 강조색 */
+            --cooling-color: #0099ff;
         }
         body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
         .container { max-width: 1500px; margin: 0 auto; }
@@ -23,7 +23,7 @@
         .back-btn { cursor: pointer; padding: 10px 18px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-weight: bold; }
         .card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
         .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; }
-        .season-info { padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; display: none; }
+        .season-info { padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; display: none; }
         .cooling-active { background-color: #e0f2fe; color: var(--cooling-color); border: 1px solid var(--cooling-color); display: block; }
         .normal-active { background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e0; display: block; }
         .table-container { background: white; border-radius: 16px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
@@ -61,7 +61,7 @@
             <div class="card">
                 <div class="upload-area" onclick="document.getElementById('excelFile').click()">
                     <span style="background:var(--primary-blue); color:white; padding:12px 28px; border-radius:8px; font-weight:bold;">일보 엑셀 업로드</span>
-                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;"></p>
+                    <p id="upload-guide" style="margin-top:20px; color:#64748b; font-size:0.9rem;">파일 이름이나 시트 내부 날짜를 자동으로 분석합니다.</p>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" style="display:none" />
                 </div>
             </div>
@@ -74,24 +74,21 @@
         let isCoolingSeason = false;
         const TOLERANCE = 40 / 60; 
 
-        // [정상 시즌 기준]
         const RULES_NORMAL = { "type1": { s: 17, ue: 1, le: 0.5 }, "type2": { s: 15, ue: 1, le: 0.5 }, "type3": { s: 15.5, ue: 1, le: 0.5 }, "default": { s: 16.5, ue: 1, le: 0.5 } };
-        
-        // [냉방 시즌 기준 (7/1~9/20)]
         const RULES_COOLING = { "type1": { s: 12, ue: 0.5, le: 0.5 }, "type2": { s: 9, ue: 0.5, le: 0.5 }, "default": { s: 9, ue: 0.5, le: 0.5 } };
 
-        // 1호선 역사별 유형 매핑 (정상/냉방 공용)
         const L1_TYPES = {
-            "화원": "type1", "반야월": "type1", "각산": "type1", // 냉방 1번 유형
-            "대곡": "type2", "월촌": "type2", "송현": "type2", "교대": "type2", "명덕": "type2", "동구청": "type2", "방촌": "type2", "용계": "type2", "율하": "type2", "신기": "type2", // 냉방 2번 유형
-            "반월당(1호선)": "type3" // 정상시즌 3번 유형
+            "화원": "type1", "반야월": "type1", "각산": "type1", 
+            "대곡": "type2", "월촌": "type2", "송현": "type2", "교대": "type2", "명덕": "type2", "동구청": "type2", "방촌": "type2", "용계": "type2", "율하": "type2", "신기": "type2",
+            "반월당": "type3"
         };
+        const LINE2_STATIONS = ["문양", "다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
 
         function showView(line) {
             currentLine = line;
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-view').classList.remove('hidden');
-            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검 모드' : '2호선 점검 모드';
+            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검' : '2호선 점검';
             document.getElementById('resultTable').innerHTML = '';
             document.getElementById('season-banner').style.display = 'none';
         }
@@ -104,14 +101,16 @@
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = (evt) => {
                 const workbook = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
                 const sheetName = workbook.SheetNames.find(n => n.includes("장비")) || workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 
-                // 1. 날짜 추출 및 시즌 판정
-                determineSeason(sheet);
+                // 파일 이름에서 날짜를 먼저 찾고, 실패하면 시트 내부 날짜 사용
+                let dateFromFileName = file.name.replace(/[^0-9]/g, "").substring(0, 8);
+                determineSeason(sheet, dateFromFileName);
 
                 if(currentLine === 'line1') processLine1(sheet);
                 else processLine2(sheet);
@@ -119,127 +118,108 @@
             reader.readAsBinaryString(file);
         });
 
-        // 엑셀에서 날짜를 읽어 냉방 시즌 여부를 결정하는 함수
-        function determineSeason(sheet) {
-            let dateVal = getCellValue(sheet, 1, 2); // 보통 B2 셀에 일자 정보가 있음
+        function determineSeason(sheet, fileNameDate) {
             let month = 0, day = 0;
 
-            if (dateVal instanceof Date) {
-                month = dateVal.getMonth() + 1;
-                day = dateVal.getDate();
-            } else {
-                // 텍스트일 경우 숫자를 찾아 분석 (예: "46082" 또는 "2026-03-01")
-                let str = String(dateVal);
-                if (str.length > 4) {
-                    let d = new Date((parseFloat(str) - 25569) * 86400 * 1000); // 엑셀 시리얼 날짜 변환
-                    if(!isNaN(d.getTime())) { month = d.getMonth() + 1; day = d.getDate(); }
+            // 1. 파일 이름에서 추출 시도 (예: 20250807)
+            if (fileNameDate && fileNameDate.length === 8) {
+                month = parseInt(fileNameDate.substring(4, 6));
+                day = parseInt(fileNameDate.substring(6, 8));
+            } 
+            
+            // 2. 파일 이름 실패 시 엑셀 내부 셀 확인
+            if (month === 0) {
+                let dateVal = getCellValue(sheet, 1, 2);
+                if (dateVal instanceof Date) {
+                    month = dateVal.getMonth() + 1;
+                    day = dateVal.getDate();
                 }
             }
 
-            // 냉방 시즌 판정: 7월 1일 ~ 9월 20일
             isCoolingSeason = (month === 7 || month === 8 || (month === 9 && day <= 20));
             
             const banner = document.getElementById('season-banner');
-            if (isCoolingSeason) {
-                banner.innerText = `❄️ 냉방 시즌 기준 적용 중 (일자: ${month}월 ${day}일)`;
-                banner.className = "season-info cooling-active";
-            } else {
-                banner.innerText = `☀️ 정상 시즌 기준 적용 중 (일자: ${month > 0 ? month + '월 ' + day + '일' : '미감지'})`;
-                banner.className = "season-info normal-active";
-            }
+            banner.innerText = `${isCoolingSeason ? '❄️ 냉방 시즌' : '☀️ 정상 시즌'} 기준 적용 중 (감지된 날짜: ${month}월 ${day}일)`;
+            banner.className = `season-info ${isCoolingSeason ? 'cooling-active' : 'normal-active'}`;
         }
 
-        function processLine1(sheet) {
-            const range = XLSX.utils.decode_range(sheet['!ref']);
-            const finalResults = [];
-            const activeRules = isCoolingSeason ? RULES_COOLING : RULES_NORMAL;
-
-            // 연장구간 (설화명곡, 화원)
-            [4, 5].forEach(col => {
-                let name = (col === 4) ? "설화명곡" : "화원";
-                finalResults.push(extractL1Data(sheet, name, col, 81, 82, 89, 90, activeRules));
-            });
-
-            // 나머지 역사 (대곡~안심)
-            for (let col = 4; col <= range.e.c; col++) {
-                let rawName = cleanText(getCellValue(sheet, 0, col));
-                if (!rawName || ['합계','명곡','화원'].includes(rawName)) continue;
-                finalResults.push(extractL1Data(sheet, rawName, col, 5, 6, 13, 14, activeRules));
-            }
-            renderTable(finalResults);
-        }
-
-        function extractL1Data(sheet, name, col, lsR, leR, rsR, reR, rules) {
-            const type = L1_TYPES[name] || "default";
-            const target = rules[type] || rules["default"];
-            
-            const rawVals = [getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col), getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)];
-            const v = rawVals.map(rv => parseToHours(rv));
-            
-            // 판정 (급기 기준 / 배기 기준 번갈아 적용)
-            const pass = [
-                checkRange(v[0], target.s), checkRange(v[1], target.ue),
-                checkRange(v[2], target.s), checkRange(v[3], target.ue)
-            ];
-            const isAll = pass.every(p => p);
-            const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '0'}</td>`;
-
-            return `<tr><td class="st-name">${name}</td>
-                <td style="font-size:0.75rem; color:#888">급${target.s}h/배${target.ue}h</td>
-                ${td(rawVals[0], pass[0])} ${td(rawVals[1], pass[1])}
-                ${td(rawVals[2], pass[2])} ${td(rawVals[3], pass[3])}
-                <td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
-        }
-
-        // 2호선 통합 일보 스캔 로직 (기존 유지하되 시즌 기준 적용)
         function processLine2(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const finalResults = [];
             let currentData = null;
             const activeRules = isCoolingSeason ? RULES_COOLING : RULES_NORMAL;
-            const LINE2_STATIONS = ["문양", "다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
 
             for (let r = 0; r <= range.e.r; r++) {
-                let rowLabel = cleanText(getCellValue(sheet, r, 0) + getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2));
+                let labelRaw = (getCellValue(sheet, r, 0) + getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2));
+                let label = cleanText(labelRaw);
                 let value = getCellValue(sheet, r, 4);
-                const foundStation = LINE2_STATIONS.find(st => rowLabel.includes(st) && rowLabel.includes("가동자료"));
+
+                // 역사 제목 찾기: "가동자료"라는 글자가 없더라도 역사명이 포함된 큰 제목줄이면 인식
+                const foundStation = LINE2_STATIONS.find(st => label.includes(st) && (label.includes("가동") || label.length < 15));
                 
                 if (foundStation) {
                     if (currentData) finalResults.push(formatRowL2(currentData, activeRules));
                     currentData = { name: foundStation, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
                     continue;
                 }
-                if (currentData && (rowLabel.includes("승강장") || rowLabel.includes("승강"))) {
-                    if (rowLabel.includes("급기")) { if (rowLabel.includes("좌")) currentData.ls = value; else currentData.rs = value; }
-                    else if (rowLabel.includes("상부배기")) { if (rowLabel.includes("좌")) currentData.lue = value; else currentData.rue = value; }
-                    else if (rowLabel.includes("하부배기")) { if (rowLabel.includes("좌")) currentData.lle = value; else currentData.rle = value; }
+                if (currentData) {
+                    if (label.includes("급기")) {
+                        if (label.includes("좌") || label.includes("시점")) currentData.ls = value; 
+                        else if (label.includes("우") || label.includes("종점")) currentData.rs = value;
+                    } else if (label.includes("상부배기")) {
+                        if (label.includes("좌") || label.includes("시점")) currentData.lue = value;
+                        else if (label.includes("우") || label.includes("종점")) currentData.rue = value;
+                    } else if (label.includes("하부배기")) {
+                        if (label.includes("좌") || label.includes("시점")) currentData.lle = value;
+                        else if (label.includes("우") || label.includes("종점")) currentData.rle = value;
+                    }
                 }
             }
             if (currentData) finalResults.push(formatRowL2(currentData, activeRules));
             renderTableL2(finalResults);
         }
 
+        // --- 기타 공용 함수들 ---
         function formatRowL2(d, rules) {
-            const target = rules["default"]; // 2호선은 별도 언급 없으므로 기본값 적용
-            const check = (val, goal) => {
-                if(!val || val === '0' || val === '-' || val === '') return true;
-                return checkRange(parseToHours(val), goal);
-            };
+            const target = rules["default"];
+            const check = (val, goal) => (!val || val === '0' || val === '-' || val === '') ? true : checkRange(parseToHours(val), goal);
             const pass = [check(d.ls, target.s), check(d.lue, target.ue), check(d.lle, target.le), check(d.rs, target.s), check(d.rue, target.ue), check(d.rle, target.le)];
             const isAll = pass.every(p => p);
             const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '-'}</td>`;
-            return `<tr><td class="st-name">${d.name}</td><td style="font-size:0.7rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>
-                ${td(d.ls, pass[0])} ${td(d.lue, pass[1])} ${td(d.lle, pass[2])}
-                ${td(d.rs, pass[3])} ${td(d.rue, pass[4])} ${td(d.rle, pass[5])}
-                <td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
+            return `<tr><td class="st-name">${d.name}</td><td style="font-size:0.7rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>${td(d.ls, pass[0])}${td(d.lue, pass[1])}${td(d.lle, pass[2])}${td(d.rs, pass[3])}${td(d.rue, pass[4])}${td(d.rle, pass[5])}<td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
         }
 
-        function renderTable(rowsHtml) {
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>최종판정</th></tr></thead><tbody>${rowsHtml.join('')}</tbody></table>`;
+        function renderTableL2(rows) {
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
-        function renderTableL2(rowsHtml) {
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>최종판정</th></tr></thead><tbody>${rowsHtml.join('')}</tbody></table>`;
+
+        function processLine1(sheet) {
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            const finalResults = [];
+            const activeRules = isCoolingSeason ? RULES_COOLING : RULES_NORMAL;
+            [4, 5].forEach(col => {
+                let name = (col === 4) ? "설화명곡" : "화원";
+                finalResults.push(extractL1Data(sheet, name, col, 81, 82, 89, 90, activeRules));
+            });
+            for (let col = 4; col <= range.e.c; col++) {
+                let rawName = cleanText(getCellValue(sheet, 0, col));
+                if (!rawName || ['합계','명곡','화원'].includes(rawName)) continue;
+                finalResults.push(extractL1Data(sheet, rawName, col, 5, 6, 13, 14, activeRules));
+            }
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>최종판정</th></tr></thead><tbody>${finalResults.join('')}</tbody></table>`;
         }
+
+        function extractL1Data(sheet, name, col, lsR, leR, rsR, reR, rules) {
+            const type = L1_TYPES[name] || "default";
+            const target = rules[type] || rules["default"];
+            const raw = [getCellValue(sheet, lsR, col), getCellValue(sheet, leR, col), getCellValue(sheet, rsR, col), getCellValue(sheet, reR, col)];
+            const v = raw.map(rv => parseToHours(rv));
+            const pass = [checkRange(v[0], target.s), checkRange(v[1], target.ue), checkRange(v[2], target.s), checkRange(v[3], target.ue)];
+            const isAll = pass.every(p => p);
+            const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '0'}</td>`;
+            return `<tr><td class="st-name">${name}</td><td style="font-size:0.75rem; color:#888">급${target.s}/배${target.ue}</td>${td(raw[0], pass[0])}${td(raw[1], pass[1])}${td(raw[2], pass[2])}${td(raw[3], pass[3])}<td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
+        }
+
         function getCellValue(sheet, row, col) { const cell = sheet[XLSX.utils.encode_cell({r:row, c:col})]; return cell ? (cell.t === 'n' && !cell.w ? cell.v : cell.w || cell.v) : ""; }
         const cleanText = (str) => str ? String(str).replace(/\s+/g, '') : '';
         const parseToHours = (val) => { if(!val) return 0; if(typeof val === 'number') return val * 24; const p = String(val).split(':'); return p.length < 2 ? parseFloat(val)||0 : parseInt(p[0]) + (parseInt(p[1])/60); };
