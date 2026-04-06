@@ -3,9 +3,8 @@ const CONFIG = {
         COOLING_START: { month: 7, day: 1 },
         COOLING_END: { month: 9, day: 20 }
     },
-    TOLERANCE: 40 / 60, // 공조기 급기 오차 40분
+    TOLERANCE: 40 / 60, 
 
-    // [승강장 공조기 기준]
     RULES_NORMAL: {
         "type1": { s: 17, ue: 1, le: 0.5 },
         "type2": { s: 15, ue: 1, le: 0.5 },
@@ -18,7 +17,7 @@ const CONFIG = {
         "default": { s: 9, ue: 0.5, le: 0.5 }
     },
 
-    // [공기청정기 기준] - 14시간 이상은 무조건 정상
+    // [공기청정기] 14시간 이상이면 정상
     AIR_PURIFIER_STD: 17,      
     AIR_PURIFIER_LIMIT: 14,    
 
