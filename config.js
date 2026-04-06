@@ -1,8 +1,5 @@
 const CONFIG = {
-    SEASON: {
-        COOLING_START: { month: 7, day: 1 },
-        COOLING_END: { month: 9, day: 20 }
-    },
+    SEASON: { COOLING_START: { month: 7, day: 1 }, COOLING_END: { month: 9, day: 20 } },
     TOLERANCE: 40 / 60, 
     RULES_NORMAL: { "type1": { s: 17, ue: 1, le: 0.5 }, "type2": { s: 15, ue: 1, le: 0.5 }, "type3": { s: 15.5, ue: 1, le: 0.5 }, "default": { s: 16.5, ue: 1, le: 0.5 } },
     RULES_COOLING: { "type1": { s: 12, ue: 0.5, le: 0.5 }, "type2": { s: 9, ue: 0.5, le: 0.5 }, "default": { s: 9, ue: 0.5, le: 0.5 } },
