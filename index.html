@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>승강장 공조기 가동 점검 시스템</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* 대구교통공사 보고서 스타일의 깔끔한 디자인 */
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .mismatch { background-color: #ffdddd; color: #d00; font-weight: bold; } /* 불일치 시 강조 */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>승강장 공조기 가동 현황 점검</h2>
+        <p>일보 데이터를 전체 복사하여 붙여넣거나 파일을 선택하세요.</p>
+        
+        <input type="file" id="excelInput" accept=".xlsx, .xls" />
+        <div id="resultArea"></div>
+    </div>
+
+    <script>
+        // 1. 명칭 사전 (역사별로 다른 이름을 하나로 통일)
+        const NAME_MAP = {
+            "반월당_승강장급기1": "시점_급기",
+            "반월당_승강장배기1": "시점_배기",
+            "중앙로_급기팬": "시점_급기",
+            // 이곳에 60개 역사의 다양한 명칭을 추가하면 됩니다.
+        };
+
+        // 2. 표준 스케줄 (기준치)
+        const SCHEDULE = {
+            "시점_급기": { start: "05:30", end: "23:30" },
+            "시점_배기": { start: "05:30", end: "23:30" },
+        };
+
+        document.getElementById('excelInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(evt) {
+                const data = evt.target.result;
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                renderTable(rows);
+            };
+            reader.readAsBinaryString(file);
+        });
+
+        function renderTable(data) {
+            let html = `<table><tr><th>역사명</th><th>기기명(원문)</th><th>표준구분</th><th>가동상태</th><th>결과</th></tr>`;
+            
+            data.forEach(row => {
+                const rawName = row['장비명']; // 엑셀의 컬럼명에 맞게 수정 필요
+                const standardName = NAME_MAP[rawName] || "미등록기기";
+                const schedule = SCHEDULE[standardName];
+                
+                // 실제 가동시간과 스케줄 비교 로직
+                const isMatch = schedule && (row['시작'] === schedule.start); 
+                const statusClass = isMatch ? "" : "mismatch";
+
+                html += `<tr class="${statusClass}">
+                    <td>${row['역사'] || '-'}</td>
+                    <td>${rawName}</td>
+                    <td>${standardName}</td>
+                    <td>${row['시작'] || '미가동'} ~ ${row['종료'] || ''}</td>
+                    <td>${isMatch ? "정상" : "확인필요"}</td>
+                </tr>`;
+            });
+            html += `</table>`;
+            document.getElementById('resultArea').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
