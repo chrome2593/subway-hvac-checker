@@ -82,14 +82,13 @@
             "명덕": "type1", "청라언덕": "type1", "반월당": "type1",
             "현충로": "type2", "중앙로": "type2", "안심": "type2", "다사": "type2", "두류": "type2", "담티": "type2", "영남대": "type2"
         };
-        const LINE2_STATIONS = ["다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
+        const LINE2_STATIONS = ["문양", "다사", "대실", "강창", "계명대", "성서산업단지", "이곡", "용산", "죽전", "감삼", "두류", "내당", "반고개", "청라언덕", "반월당", "경대병원", "대구은행", "범어", "수성구청", "만촌", "담티", "연호", "대공원", "고산", "신매", "사월", "정평", "임당", "영남대"];
 
         function showView(line) {
             currentLine = line;
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('app-view').classList.remove('hidden');
-            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검 모드' : '2호선 점검 모드';
-            document.getElementById('upload-guide').innerText = `엑셀 파일을 선택하세요. (±40분 오차 허용)`;
+            document.getElementById('view-title').innerText = line === 'line1' ? '1호선 점검' : '2호선 점검 (통합 일보 양식)';
             document.getElementById('resultTable').innerHTML = '';
         }
 
@@ -113,46 +112,53 @@
             reader.readAsBinaryString(file);
         });
 
-        // --- [2호선 엔진: 역사명 자동감지 및 키워드 매칭] ---
+        // --- [2호선 엔진: 세로 통합 일보 정밀 스캔] ---
         function processLine2(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
-            const rows = [];
-            
-            // 1. 역사 이름 찾기 (주로 1행 제목에 있음)
-            let stationName = "";
-            for(let r=0; r<5; r++) {
-                let cellA1 = cleanText(getCellValue(sheet, r, 0) + getCellValue(sheet, r, 1));
-                stationName = LINE2_STATIONS.find(st => cellA1.includes(st)) || "";
-                if(stationName) break;
-            }
+            const finalResults = [];
+            let currentData = null;
 
-            if(!stationName) {
-                document.getElementById('resultTable').innerHTML = "<p style='padding:20px; text-align:center;'>역사명을 감지할 수 없습니다. 시트 상단에 역사명이 있는지 확인해주세요.</p>";
-                return;
-            }
-
-            // 2. 데이터 추출 객체
-            let d = { name: stationName, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
-
-            // 3. 전체 시트를 훑으며 장비 키워드 매칭
+            // 1. 시트 전체를 위에서 아래로 한 줄씩 탐색
             for (let r = 0; r <= range.e.r; r++) {
-                let label = cleanText(getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2)); // B, C열 합침
-                let val = getCellValue(sheet, r, 4); // E열 가동시간
+                // A~C열 텍스트 결합 (역사명 및 장비명 추출용)
+                let rowLabel = cleanText(getCellValue(sheet, r, 0) + getCellValue(sheet, r, 1) + getCellValue(sheet, r, 2));
+                let value = getCellValue(sheet, r, 4); // E열 가동시간
 
-                if (label.includes("급기")) {
-                    if (label.includes("좌") || label.includes("시점")) d.ls = val; 
-                    else if (label.includes("우") || label.includes("종점")) d.rs = val;
-                } else if (label.includes("상부배기")) {
-                    if (label.includes("좌") || label.includes("시점")) d.lue = val;
-                    else if (label.includes("우") || label.includes("종점")) d.rue = val;
-                } else if (label.includes("하부배기")) {
-                    if (label.includes("좌") || label.includes("시점")) d.lle = val;
-                    else if (label.includes("우") || label.includes("종점")) d.rle = val;
+                // 2. 새로운 역사가 나타났는지 확인 (예: "일일장비가동자료_다사")
+                const foundStation = LINE2_STATIONS.find(st => rowLabel.includes(st) && rowLabel.includes("가동자료"));
+                
+                if (foundStation) {
+                    // 이전 역사 데이터가 있으면 결과 배열에 추가
+                    if (currentData) finalResults.push(formatRowL2(currentData));
+                    // 새 역사 데이터 객체 생성
+                    currentData = { name: foundStation, ls:null, lue:null, lle:null, rs:null, rue:null, rle:null };
+                    continue;
+                }
+
+                // 3. 역사 하위의 장비 키워드 매칭
+                if (currentData) {
+                    if (rowLabel.includes("승강장") || rowLabel.includes("승강")) {
+                        if (rowLabel.includes("급기")) {
+                            if (rowLabel.includes("좌")) currentData.ls = value; 
+                            else if (rowLabel.includes("우")) currentData.rs = value;
+                        } else if (rowLabel.includes("상부배기")) {
+                            if (rowLabel.includes("좌")) currentData.lue = value;
+                            else if (rowLabel.includes("우")) currentData.rue = value;
+                        } else if (rowLabel.includes("하부배기")) {
+                            if (rowLabel.includes("좌")) currentData.lle = value;
+                            else if (rowLabel.includes("우")) currentData.rle = value;
+                        }
+                    }
                 }
             }
+            // 마지막 역사 추가
+            if (currentData) finalResults.push(formatRowL2(currentData));
 
-            rows.push(formatRowL2(d));
-            renderTableL2(rows);
+            if (finalResults.length === 0) {
+                document.getElementById('resultTable').innerHTML = "<p style='padding:40px; text-align:center; color:red; font-weight:bold;'>2호선 데이터를 감지하지 못했습니다. 시트 이름이 '장비'인지 확인해주세요.</p>";
+            } else {
+                renderTableL2(finalResults);
+            }
         }
 
         function formatRowL2(d) {
@@ -169,27 +175,27 @@
             const td = (val, ok) => `<td class="${ok ? '' : 'bad-val'}">${val || '-'}</td>`;
 
             return `<tr><td class="st-name">${d.name}</td>
-                <td style="font-size:0.7rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>
+                <td style="font-size:0.75rem; color:#888">급${target.s}/상${target.ue}/하${target.le}</td>
                 ${td(d.ls, pass[0])} ${td(d.lue, pass[1])} ${td(d.lle, pass[2])}
                 ${td(d.rs, pass[3])} ${td(d.rue, pass[4])} ${td(d.rle, pass[5])}
                 <td><span class="badge ${isAll ? 'badge-success' : 'badge-danger'}">${isAll ? '정상' : '확인필요'}</span></td></tr>`;
         }
 
-        function renderTableL2(rows) {
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>최종판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+        function renderTableL2(rowsHtml) {
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준(h)</th><th>시점급기</th><th>시점상부</th><th>시점하부</th><th>종점급기</th><th>종점상부</th><th>종점하부</th><th>최종판정</th></tr></thead><tbody>${rowsHtml.join('')}</tbody></table>`;
         }
 
-        // --- [1호선 엔진 - 기존 방식 유지] ---
+        // --- 1호선 로직 유지 ---
         function processLine1(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
-            const results = [];
-            [4, 5].forEach(col => { results.push(extractRowL1(sheet, (col===4?"설화명곡":"화원"), col, 81, 82, 89, 90)); });
+            const rows = [];
+            [4, 5].forEach(col => { rows.push(extractRowL1(sheet, (col===4?"설화명곡":"화원"), col, 81, 82, 89, 90)); });
             for (let col = 4; col <= range.e.c; col++) {
                 let name = cleanText(getCellValue(sheet, 0, col));
                 if (!name || ['합계','명곡','화원'].includes(name)) continue;
-                results.push(extractRowL1(sheet, name, col, 5, 6, 13, 14));
+                rows.push(extractRowL1(sheet, name, col, 5, 6, 13, 14));
             }
-            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>판정</th></tr></thead><tbody>${results.join('')}</tbody></table>`;
+            document.getElementById('resultTable').innerHTML = `<table><thead><tr><th>역사명</th><th>기준</th><th>시점급기</th><th>시점배기</th><th>종점급기</th><th>종점배기</th><th>판정</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
         }
 
         function extractRowL1(sheet, name, col, lsR, leR, rsR, reR) {
