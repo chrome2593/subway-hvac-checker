@@ -9,8 +9,17 @@ const CONFIG = {
     COOLING_TARGETS: { "type1": { s: 12, e: 0.5 }, "type2": { s: 9, e: 0.5 }, "type3": { s: 9, e: 0.5 } },
     AIR_PURIFIER_STD: 17, AIR_PURIFIER_LIMIT: 14, TOLERANCE: 40 / 60,
 
-    // [수정] 다사, 대실 외에 성서산단 등 장비 없는 곳 확인용
-    NO_EXHAUST_HA: ["다사", "대실"],
+    // [수정] 2호선 역 명칭 매핑 (시스템명: 일보표기명)
+    L2_NAME_MAP: {
+        "수성알파시티": "수성알파",
+        "영남대": "영대"
+    },
+
+    // [수정] 장비가 아예 없는 예외 케이스 (표기 시 '-' 처리)
+    NO_EQUIPMENT: {
+        "다사": ["시하", "종하"],
+        "대실": ["시하", "종하"]
+    },
 
     BRANCHES: {
         line1: {
