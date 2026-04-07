@@ -4,8 +4,6 @@ const CONFIG = {
     COOLING_TARGETS: { "type1": { s: 12, e: 0.5 }, "type2": { s: 9, e: 0.5 }, "type3": { s: 9, e: 0.5 } },
     AIR_PURIFIER_STD: 17, AIR_PURIFIER_LIMIT: 14,
     TOLERANCE: 40 / 60,
-
-    // --- [기계분소별 역사 배분] ---
     BRANCHES: {
         line1: {
             left: { name: "송현기계분소", stations: ["설화명곡", "화원", "대곡", "진천", "월배", "상인", "월촌", "송현", "서부정류장", "대명", "안지랑", "현충로", "영대병원", "교대", "명덕", "반월당", "중앙로"] },
