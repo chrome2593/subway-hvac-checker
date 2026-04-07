@@ -1,25 +1,20 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
-:root {
-    --primary: #004595; --dark: #1e293b; --bg-light: #ffffff;
-    --danger: #e11d48; --warning: #f59e0b; --success: #10b981; --border: #e2e8f0;
-}
-
+:root { --primary: #004595; --dark: #1e293b; --bg-light: #ffffff; --danger: #e11d48; --warning: #f59e0b; --success: #10b981; --border: #e2e8f0; }
 body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg-light); color: var(--dark); overflow-y: scroll; }
 .hidden { display: none !important; }
 .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
 
 .app-header { background: white; border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
 .header-inner { display: flex; justify-content: space-between; align-items: center; }
-.back-btn { background: #f1f5f9; border: 1px solid #cbd5e0; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #475569; transition: 0.2s; }
+.back-btn { background: #f1f5f9; border: 1px solid #cbd5e0; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #475569; }
 .line-badge { font-weight: 800; color: var(--primary); font-size: 1.3rem; }
 
 .upload-box { background: white; padding: 60px 40px; border: 2px dashed #cbd5e0; border-radius: 24px; text-align: center; cursor: pointer; margin-bottom: 40px; transition: 0.3s; }
 .upload-box.minimized { padding: 15px 40px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 20px; border-style: solid; border-width: 1px; background: #f8fafc; }
-.upload-box.minimized h3 { font-size: 1.1rem !important; margin: 0; }
+.upload-box.minimized h3 { font-size: 1rem !important; margin: 0; }
 .upload-box.minimized p { display: none; }
 
-/* 통합 요약 카드 디자인 */
 .summary-section-main-title { font-weight: 900; font-size: 1.6rem; color: var(--danger); margin: 30px 0 25px; }
 .summary-area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 50px; }
 .summary-card { background: #fff; border: 1px solid #fda4af; border-left: 10px solid var(--danger); padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.06); }
@@ -28,20 +23,18 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg-li
 .summary-group-label { font-weight: 800; font-size: 1.05rem; color: #475569; margin: 20px 0 10px 0; display: block; }
 .summary-badge-container { display: flex; flex-wrap: wrap; gap: 8px; line-height: 2; }
 
-/* 배지 스타일 */
 .badge { padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; white-space: normal; }
 .badge-danger { background: #fee2e2; color: #e11d48; border: 1px solid #fda4af; }
 .badge-warning { background: #fef3c7; color: #d97706; }
 .badge-success { background: #dcfce7; color: #059669; }
 
-/* 상세 결과 레이아웃 */
 .equipment-row { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 50px; align-items: stretch; }
 .branch-column { display: flex; flex-direction: column; }
 .branch-name-header { background: var(--dark); color: white; padding: 12px 20px; border-radius: 8px; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; align-self: flex-start; }
 
 .toggle-detail-btn { 
-    width: 100%; padding: 15px; margin-bottom: 12px; border-radius: 12px; border: 1.5px solid #cbd5e0;
-    background: #ffffff; color: var(--primary); font-weight: 800; font-size: 1.05rem; cursor: pointer; transition: all 0.2s;
+    width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1.5px solid #cbd5e0;
+    background: #ffffff; color: var(--primary); font-weight: 800; font-size: 1.05rem; cursor: pointer; transition: 0.2s;
     display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 .toggle-detail-btn:hover { background: #f0f7ff; border-color: var(--primary); }
@@ -51,13 +44,12 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg-li
 .detail-content.active { display: block; }
 
 .section-title { font-weight: 800; font-size: 1.4rem; color: var(--primary); margin: 50px 0 25px; padding-left: 12px; border-left: 6px solid var(--primary); }
-
 .table-wrapper { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 th, td { padding: 14px 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
 .st-name { font-weight: 800; color: var(--primary); background: #fcfdfe; width: 95px; border-right: 1px solid #f1f5f9; }
 
-.units-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; padding: 10px; }
+.units-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 8px; padding: 10px; }
 .unit-box { display: flex; flex-direction: column; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 10px; background: white; font-weight: 700; transition: 0.2s; }
 .unit-box strong { font-size: 0.75rem; color: #94a3b8; margin-bottom: 5px; }
 .unit-time { font-size: 0.95rem; font-weight: 800; color: var(--dark); }
