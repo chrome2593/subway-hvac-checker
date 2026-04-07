@@ -3,39 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1·2호선 가동일보 분석</title>
+    <title>1·2호선 가동일보 분석 시스템</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div id="home-view" class="hero-view">
-        <div class="hero-content">
-            <div class="corp-tag">DAEGU TRANSPORTATION CORP.</div>
-            <h1>1·2호선 가동일보 분석</h1>
-            <button class="main-start-btn" onclick="showApp()">분석 시작</button>
-        </div>
-    </div>
-    <div id="app-view" class="hidden">
+    <div id="app-view">
         <header class="app-header">
             <div class="container header-inner">
-                <button class="back-btn" onclick="goBack()">← 뒤로가기</button>
-                <div id="line-indicator" class="line-badge">파일을 업로드 해주십시오</div>
-                <div style="width:80px;"></div>
+                <button class="back-btn" onclick="location.reload()">↺ 분석 초기화</button>
+                <div id="line-indicator" class="line-badge">가동일보 파일을 업로드 해주십시오</div>
+                <div style="width:100px;"></div>
             </div>
         </header>
+
         <main class="container">
-            <section id="main-content" style="margin-top: 40px;">
+            <section id="main-content" style="margin-top: 30px;">
                 <div id="season-banner" class="season-info" style="display:none;"></div>
+                
                 <div id="upload-container" class="upload-box" onclick="document.getElementById('excelFile').click()">
                     <input type="file" id="excelFile" hidden />
-                    <h3 style="margin:0; color: var(--primary); font-size:1.5rem;">가동일보 파일 업로드</h3>
+                    <div class="upload-icon" style="font-size: 3.5rem; margin-bottom: 15px;">📄</div>
+                    <h3 style="margin:0; color: var(--primary); font-size: 1.5rem;">가동일보 파일 업로드</h3>
                     <p style="color:#64748b; margin-top:15px; font-weight:600;">드림스 가동일보 드래그 앤 드롭</p>
                 </div>
+                
                 <div id="summary-area"></div>
                 <div id="full-list-area"></div>
             </section>
         </main>
     </div>
+
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
