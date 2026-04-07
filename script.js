@@ -40,7 +40,7 @@ function runIntegratedAnalysis(wb) {
 
     const banner = document.getElementById('season-banner');
     banner.style.display = 'block';
-    banner.innerHTML = `공조: <strong>${isCooling ? '❄️ 냉방' : '☀️ 비냉방'}</strong> | 환기: <strong>${ventSeason}</strong> (${m}월 ${d}일)`;
+    banner.innerHTML = `공조 기준: <strong>${isCooling ? '❄️ 냉방' : '☀️ 비냉방'}</strong> | 환기 기준: <strong>${ventSeason}</strong> (${m}월 ${d}일)`;
 
     const hvacSheet = wb.Sheets[wb.SheetNames.find(n => n.includes("장비")) || wb.SheetNames[0]];
     const airSheet = wb.Sheets[wb.SheetNames.find(n => n.includes("공기청정기")) || wb.SheetNames[0]];
@@ -52,12 +52,13 @@ function runIntegratedAnalysis(wb) {
     renderAll(hvacData, airData, ventData);
 }
 
-// --- [공통 분석 엔진] ---
+// --- [분석 로직] ---
 function analyze(val, target, station, type) {
     if (val === "N/A") return { s: 'none', c: '' };
     if (station === "문양") return { s: 'ok', c: '' };
     const h = parseH(val);
     const diff = Math.abs(h - target);
+
     if (!isCooling) {
         if (type === 'supply') {
             if (diff >= 5) return { s: 'critical', c: 'critical-val' };
@@ -84,36 +85,30 @@ function analyzeVent(val, isRight) {
     return (h === target) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
 }
 
-// --- [추출 엔진 - 2호선] ---
+// --- [추출 엔진] ---
 function getL2Vent(sheet) {
     const data = [];
     const range = XLSX.utils.decode_range(sheet['!ref']);
     CONFIG.LINE2_STATIONS.forEach(stName => {
         const matchName = CONFIG.L2_NAME_MAP[stName] || stName;
-        
-        // 반월당 특수 처리 (T열)
         if (stName === "반월당") {
             const raw = [getCV(sheet, 439, 19), getCV(sheet, 440, 19), getCV(sheet, 441, 19), getCV(sheet, 442, 19)];
             const res = [analyzeVent(raw[0], false), analyzeVent(raw[1], false), analyzeVent(raw[2], true), analyzeVent(raw[3], true)];
             data.push({ name: stName, units: [{l:"시급",v:raw[0],r:res[0]},{l:"시배",v:raw[1],r:res[1]},{l:"종급",v:raw[2],r:res[2]},{l:"종배",v:raw[3],r:res[3]}], isCri: res.some(r=>r.s==='critical') });
             return;
         }
-
-        let foundRow = -1;
+        let fRow = -1;
         for (let r = 0; r <= range.e.r; r++) {
-            let txt = cleanText(getCV(sheet, r, 0) + getCV(sheet, r, 1));
-            if (txt.includes(matchName)) { foundRow = r; break; }
+            if (cleanText(getCV(sheet, r, 0) + getCV(sheet, r, 1)).includes(matchName)) { fRow = r; break; }
         }
-
-        if (foundRow !== -1) {
+        if (fRow !== -1) {
             let units = [];
-            for (let r = foundRow; r < foundRow + 40 && r <= range.e.r; r++) {
+            for (let r = fRow; r < fRow + 40 && r <= range.e.r; r++) {
                 [1, 6, 11].forEach(col => {
                     let name = cleanText(getCV(sheet, r, col));
                     if (name.includes("환기실")) {
                         let val = getCV(sheet, r, col + 3);
-                        const noEquip = CONFIG.NO_EQUIPMENT[stName] || [];
-                        if (noEquip.some(ex => name.includes(ex))) val = "N/A";
+                        if ((CONFIG.NO_EQUIPMENT[stName] || []).some(ex => name.includes(ex))) val = "N/A";
                         units.push({ l: name.replace("환기실", "").trim(), v: val, r: analyzeVent(val, (name.includes("우")||name.includes("종점"))) });
                     }
                 });
@@ -124,19 +119,18 @@ function getL2Vent(sheet) {
     return data;
 }
 
-// 1호선 환기실 추출을 2호선과 동일한 units 구조로 변경
 function getL1Vent(sheet) {
     const data = []; const range = XLSX.utils.decode_range(sheet['!ref']);
     for (let c = 4; c <= range.e.c; c++) {
         let n = cleanText(getCV(sheet, 0, c)); if(!n || ["합계","명곡","화원"].includes(n)) continue;
-        const raw = [getCV(sheet, 20, c), getCV(sheet, 21, c), getCV(sheet, 22, c), getCV(sheet, 23, c)];
-        const res = [analyzeVent(raw[0], false), analyzeVent(raw[1], false), analyzeVent(raw[2], true), analyzeVent(raw[3], true)];
-        data.push({ name: n, units: [{l:"시급",v:raw[0],r:res[0]},{l:"시배",v:raw[1],r:res[1]},{l:"종급",v:raw[2],r:res[2]},{l:"종배",v:raw[3],r:res[3]}], isCri: res.some(r=>r.s==='critical') });
+        const r = [getCV(sheet, 20, c), getCV(sheet, 21, c), getCV(sheet, 22, c), getCV(sheet, 23, c)];
+        const rs = [analyzeVent(r[0], false), analyzeVent(r[1], false), analyzeVent(r[2], true), analyzeVent(r[3], true)];
+        data.push({ name: n, units: [{l:"시급",v:r[0],r:rs[0]},{l:"시배",v:r[1],r:rs[1]},{l:"종급",v:r[2],r:rs[2]},{l:"종배",v:r[3],r:rs[3]}], isCri: rs.some(x=>x.s==='critical') });
     }
     [{n:"설화명곡", c:5}, {n:"화원", c:4}].forEach(s => {
-        const raw = [getCV(sheet, 98, s.c), getCV(sheet, 99, s.c), getCV(sheet, 100, s.c), getCV(sheet, 101, s.c)];
-        const res = [analyzeVent(raw[0], false), analyzeVent(raw[1], false), analyzeVent(raw[2], true), analyzeVent(raw[3], true)];
-        data.push({ name: s.n, units: [{l:"시급",v:raw[0],r:res[0]},{l:"시배",v:raw[1],r:res[1]},{l:"종급",v:raw[2],r:res[2]},{l:"종배",v:raw[3],r:res[3]}], isCri: res.some(r=>r.s==='critical') });
+        const r = [getCV(sheet, 98, s.c), getCV(sheet, 99, s.c), getCV(sheet, 100, s.c), getCV(sheet, 101, s.c)];
+        const rs = [analyzeVent(r[0], false), analyzeVent(r[1], false), analyzeVent(r[2], true), analyzeVent(r[3], true)];
+        data.push({ name: s.n, units: [{l:"시급",v:r[0],r:rs[0]},{l:"시배",v:r[1],r:rs[1]},{l:"종급",v:r[2],r:rs[2]},{l:"종배",v:r[3],r:rs[3]}], isCri: rs.some(x=>x.s==='critical') });
     });
     return data;
 }
@@ -151,10 +145,8 @@ function renderAll(hvac, air, vent) {
         const cA = air.filter(d => br.stations.includes(d.name) && d.isCri);
         const cV = vent.filter(d => br.stations.includes(d.name) && d.isCri);
         const isOk = (cH.length === 0 && cA.length === 0 && cV.length === 0);
-
         let h = `<div class="summary-card ${isOk?'ok':''}"> <div class="summary-title">📍 ${br.name}</div>`;
         if (isOk) return h + `<div style="color:var(--success); font-weight:700;">✅ 모든 장비 정상 가동 중</div></div>`;
-        
         if (cH.length > 0) {
             h += `<span class="summary-group-label">[승강장 공조기]</span><div class="summary-badge-container">`;
             cH.forEach(d => { d.res.forEach((r, i) => { if (r.s === 'critical') h += `<span class="badge badge-danger">${d.name} ${hLabels[i]} (${formatToHMS(d.raw[i])})</span> `; }); });
@@ -202,12 +194,8 @@ function buildHVACTable(data) {
     let h = `<div class="table-wrapper"><table><thead><tr>${hds.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
     data.forEach(d => {
         h += `<tr><td class="st-name">${d.name}</td>`;
-        d.raw.forEach((v, i) => {
-            const label = (currentLine === 'line2' && (i===2 || i===5)) ? "exhaust_ha" : "supply";
-            const res = analyze(v, 0, d.name, label);
-            h += `<td class="${res.c}">${v==="N/A"?"-":formatToHMS(v)}</td>`;
-        });
-        h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'이상':'정상')}</span></td></tr>`;
+        d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${v==="N/A"?"-":formatToHMS(v)}</td>`; });
+        h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'확인':'정상')}</span></td></tr>`;
     });
     return h + `</tbody></table></div>`;
 }
@@ -233,7 +221,6 @@ function buildAirTable(data) {
     return h + `</tbody></table></div>`;
 }
 
-// 헬퍼 (기존 유지)
 function formatToHMS(v) { if(!v||v==='0'||v===0||v==='-'||v==="N/A") return "0:00:00"; let ts; if(typeof v==='number') ts=Math.round(v*24*3600); else if(typeof v==='string'&&v.includes(':')){ const p=v.split(':'); ts=(parseInt(p[0])||0)*3600+(parseInt(p[1])||0)*60+(parseInt(p[2])||0); } else { const n=parseFloat(v); if(isNaN(n)) return "0:00:00"; ts=Math.round(n*3600); } const h=Math.floor(ts/3600), m=Math.floor((ts%3600)/60), s=ts%60; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
 function getCV(s, r, c) { const cell = s[XLSX.utils.encode_cell({r:r, c:c})]; return cell ? cell.w || cell.v : ""; }
 function parseH(v) { if(!v||v==="N/A") return 0; if(typeof v === 'number') return v * 24; const p = String(v).split(':'); if(p.length < 2) return parseFloat(v)||0; return parseInt(p[0]) + (parseInt(p[1])||0)/60 + (parseInt(p[2])||0)/3600; }
