@@ -1,24 +1,21 @@
 const CONFIG = {
     SEASON: { COOLING_START: { month: 7, day: 1 }, COOLING_END: { month: 9, day: 20 } },
-    VENT_SEASON: {
-        INTER: [3, 4, 5, 10], 
-        SUMMER: [6, 7, 8, 9], 
-        WINTER: [11, 12, 1, 2]
-    },
+    VENT_SEASON: { INTER: [3, 4, 5, 10], SUMMER: [6, 7, 8, 9], WINTER: [11, 12, 1, 2] },
     NORMAL_TARGETS: { "type1": { s: 17, e: 1 }, "type2": { s: 15, e: 1 }, "type3": { s: 15.5, e: 1 }, "type4": { s: 16.5, e: 1 } },
     COOLING_TARGETS: { "type1": { s: 12, e: 0.5 }, "type2": { s: 9, e: 0.5 }, "type3": { s: 9, e: 0.5 } },
     AIR_PURIFIER_STD: 17, AIR_PURIFIER_LIMIT: 14, TOLERANCE: 40 / 60,
 
-    // [수정] 2호선 역 명칭 매핑 (시스템명: 일보표기명)
+    // [매핑] 2호선 역 명칭 일보와 시스템명 일치화
     L2_NAME_MAP: {
         "수성알파시티": "수성알파",
-        "영남대": "영대"
+        "영남대": "영대",
+        "성서산업단지": "성서산단"
     },
 
-    // [수정] 장비가 아예 없는 예외 케이스 (표기 시 '-' 처리)
+    // [예외] 장비가 아예 없어 '-'로 표기할 역사 및 위치
     NO_EQUIPMENT: {
-        "다사": ["시하", "종하"],
-        "대실": ["시하", "종하"]
+        "다사": ["시하", "종하", "시점하부", "종점하부"],
+        "대실": ["시하", "종하", "시점하부", "종점하부"]
     },
 
     BRANCHES: {
