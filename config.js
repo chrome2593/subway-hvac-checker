@@ -2,17 +2,17 @@ const CONFIG = {
     SEASON: { COOLING_START: { month: 7, day: 1 }, COOLING_END: { month: 9, day: 20 } },
     VENT_SEASON: { INTER: [3, 4, 5, 10], SUMMER: [6, 7, 8, 9], WINTER: [11, 12, 1, 2] },
     
-    // [공조기 기준치]
+    // [공조기 초기 기준치]
     NORMAL_TARGETS: { "type1": 17, "type2": 15, "type3": 15.5, "type4": 16.5 },
     COOLING_TARGETS: { "type1": 12, "type2": 9, "type3": 9 },
     
     AIR_PURIFIER_STD: 17, 
     TOLERANCE: 40 / 60,
 
-    // [매핑] 2호선 역 명칭 일보와 시스템명 일치화
+    // [매핑] 2호선 역 명칭 일치화
     L2_NAME_MAP: { "수성알파시티": "수성알파", "영남대": "영대", "성서산업단지": "성서산단" },
 
-    // [예외] 장비가 아예 없어 '-'로 표기할 역사 및 항목
+    // [예외] 장비가 아예 없어 '-'로 표기할 항목
     NO_EQUIPMENT: {
         "다사": ["시하", "종하", "시점하부", "종점하부", "하부배기"],
         "대실": ["시하", "종하", "시점하부", "종점하부", "하부배기"]
