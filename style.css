@@ -8,7 +8,7 @@
 
 body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg-light); color: var(--dark); overflow-y: scroll; }
 .hidden { display: none !important; }
-.container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
+.container { max-width: 1260px; margin: 0 auto; padding: 0 20px; }
 
 /* 메인 화면 */
 .hero-view { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-light); text-align: center; }
@@ -16,25 +16,26 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg-li
 .corp-tag { letter-spacing: 5px; opacity: 0.5; margin-bottom: 15px; font-weight: 700; }
 .main-start-btn { padding: 22px 100px; font-size: 1.3rem; font-weight: 800; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; transition: 0.3s; }
 
-/* 헤더 및 뒤로가기 */
-.app-header { background: white; border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0; z-index: 100; }
+/* 앱 헤더 */
+.app-header { background: white; border-bottom: 1px solid var(--border); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
 .header-inner { display: flex; justify-content: space-between; align-items: center; }
 .back-btn { background: #f1f5f9; border: 1px solid #cbd5e0; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #475569; }
 .line-badge { font-weight: 800; color: var(--primary); font-size: 1.3rem; }
 
-/* 업로드 박스 및 축소 기능 */
+/* 업로드 박스 축소 기능 */
 .upload-box { background: white; padding: 60px 40px; border: 2px dashed #cbd5e0; border-radius: 24px; text-align: center; cursor: pointer; margin: 20px 0 40px; transition: all 0.4s ease; }
 .upload-box.minimized { padding: 15px 40px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 20px; border-style: solid; border-width: 1px; background: #f8fafc; }
 .upload-box.minimized h3 { font-size: 1.1rem !important; margin: 0; }
 .upload-box.minimized p { display: none; }
 
-/* 통합 요약 */
-.summary-container { background: #fff; border: 1px solid #fda4af; border-left: 10px solid var(--danger); padding: 30px; border-radius: 20px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(225, 29, 72, 0.05); }
-.summary-section-title { font-weight: 900; font-size: 1.5rem; color: var(--danger); margin-bottom: 20px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px; }
+/* 통합 요약 2분할 레이아웃 */
+.summary-container { background: #fff; border: 1px solid #fda4af; border-left: 10px solid var(--danger); padding: 30px; border-radius: 20px; margin-bottom: 40px; }
+.summary-section-title { font-weight: 900; font-size: 1.5rem; color: var(--danger); margin-bottom: 25px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.summary-branch-name { font-size: 1.1rem; font-weight: 800; color: var(--dark); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
 
-/* 좌우 분할 레이아웃 */
+/* 분소별 하단 레이아웃 */
 .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; align-items: start; }
-.branch-column { background: white; }
 .branch-title { background: var(--dark); color: white; padding: 12px 20px; border-radius: 8px; font-weight: 800; margin-bottom: 25px; font-size: 1.1rem; display: inline-block; }
 
 .section-title { font-weight: 800; font-size: 1.2rem; margin: 30px 0 15px; color: var(--primary); border-left: 5px solid var(--primary); padding-left: 10px; }
@@ -42,49 +43,19 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: var(--bg-li
 table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.9rem; }
 th { background: #f8fafc; padding: 12px 8px; color: #64748b; border-bottom: 1px solid var(--border); }
 td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; text-align: center; }
-.st-name { font-weight: 800; color: var(--primary); background: #fcfdfe; width: 100px; border-right: 1px solid #f1f5f9; }
+.st-name { font-weight: 800; color: var(--primary); background: #fcfdfe; width: 90px; border-right: 1px solid #f1f5f9; }
 
-/* 공기청정기 그리드 */
 .units-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; padding: 5px; }
 .unit-box { display: flex; flex-direction: column; align-items: center; padding: 8px; border: 1px solid #eee; border-radius: 8px; background: white; font-weight: 600; font-size: 0.85rem; }
 .unit-box strong { font-size: 0.7rem; color: #94a3b8; margin-bottom: 3px; }
 
-/* 상태 배지 */
-.badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; display: inline-block; }
+/* 상태 강조 */
+.badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 800; display: inline-block; }
 .badge-danger { background: #ffe4e6; color: #e11d48; }
 .badge-warning { background: #fef3c7; color: #d97706; }
 .badge-success { background: #dcfce7; color: #059669; }
-.critical-val { background: #ef4444 !important; color: white !important; border: none !important; }
+.critical-val { background: #ef4444 !important; color: white !important; border-radius: 6px; }
 .critical-val strong { color: rgba(255, 255, 255, 0.9) !important; }
 .bad-val { background: #fffbeb; color: #b45309; }
 
-@media (max-width: 1100px) { .split-layout { grid-template-columns: 1fr; } }
-
-/* style.css 하단에 추가하거나 해당 부분을 수정하세요 */
-
-/* 요약 박스 내부 그리드 */
-.summary-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-}
-
-/* 요약 박스 내 분소 구분선 (선택 사항) */
-.summary-branch-section {
-    padding: 0 10px;
-}
-
-.summary-branch-name {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--dark);
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* 모바일/작은 화면 대응 */
-@media (max-width: 1000px) {
-    .summary-grid { grid-template-columns: 1fr; }
-}
+@media (max-width: 1000px) { .split-layout, .summary-grid { grid-template-columns: 1fr; } }
