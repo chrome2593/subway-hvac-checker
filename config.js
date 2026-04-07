@@ -2,13 +2,12 @@ const CONFIG = {
     SEASON: { COOLING_START: { month: 7, day: 1 }, COOLING_END: { month: 9, day: 20 } },
     VENT_SEASON: { INTER: [3, 4, 5, 10], SUMMER: [6, 7, 8, 9], WINTER: [11, 12, 1, 2] },
     
-    // [공조기 기준치]
+    // [공조기 초기 기준치]
     NORMAL_TARGETS: { "type1": 17, "type2": 15, "type3": 15.5, "type4": 16.5 },
     COOLING_TARGETS: { "type1": 12, "type2": 9, "type3": 9 },
     AIR_PURIFIER_STD: 17, 
     TOLERANCE: 40 / 60,
 
-    // [2호선 매핑]
     L2_NAME_MAP: { "수성알파시티": "수성알파", "영남대": "영대", "성서산업단지": "성서산단" },
     
     // [장비 없음 예외]
@@ -17,7 +16,7 @@ const CONFIG = {
         "대실": ["시하", "종하", "시점하부", "종점하부", "하부배기"]
     },
 
-    // [환기실 특이사항]
+    // [환기실 특수 기준 역사]
     VENT_EXC_19H: ["중앙로", "칠성시장", "방촌", "수성알파시티", "수성알파", "송현", "연호", "반월당"],
     VENT_EXC_17_8H: ["명덕", "연호", "임당", "영남대"],
 
