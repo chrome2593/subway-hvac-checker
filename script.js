@@ -2,19 +2,23 @@ let currentLine = '', isCooling = false, currentWorkbook = null, currentFileName
 
 function goBack() { location.reload(); }
 
-// [수정] 버튼 클릭 시 해당 섹션 토글
-function toggleDetail(btn, targetId) {
+// [수정] 버튼 클릭 시 토글 로직 (문구 깨짐 방지)
+function toggleDetail(btn, targetId, labelName) {
     const target = document.getElementById(targetId);
     if (!target) return;
+    
     const isActive = target.classList.contains('active');
     
-    // 상태 전환
+    // 클래스 토글
     target.classList.toggle('active');
     btn.classList.toggle('active');
     
-    // 텍스트 변경
-    const label = btn.innerText.split(' ')[0]; // [승강장공조기] 등 추출
-    btn.innerText = isActive ? `${label} 상세보기` : `${label} 닫기`;
+    // 문구 업데이트 (정확히 통일)
+    if (isActive) {
+        btn.innerHTML = `[${labelName}] 상세보기 ▾`;
+    } else {
+        btn.innerHTML = `[${labelName}] 닫기 ▴`;
+    }
 }
 
 document.getElementById('excelFile').addEventListener('change', function(e) {
@@ -42,7 +46,7 @@ function runIntegratedAnalysis(wb) {
     isCooling = (m === 7 || m === 8 || (m === 9 && d <= 20));
     const banner = document.getElementById('season-banner');
     banner.style.display = 'block';
-    banner.innerHTML = `현재 적용 기준: <strong>${isCooling ? '❄️ 냉방 시즌' : '☀️ 비냉방 시즌'}</strong> (${m || '?'}월 ${d || '?'}일 기준)`;
+    banner.innerHTML = `분석 기준 적용: <strong>${isCooling ? '❄️ 냉방 시즌' : '☀️ 비냉방 시즌'}</strong> (${m || '?'}월 ${d || '?'}일 기준)`;
 
     const hvacSheet = wb.Sheets[wb.SheetNames.find(n => n.includes("장비")) || wb.SheetNames[0]];
     const airSheet = wb.Sheets[wb.SheetNames.find(n => n.includes("공기청정기")) || wb.SheetNames[0]];
@@ -53,14 +57,9 @@ function runIntegratedAnalysis(wb) {
     renderAll(hvacData, airData);
 }
 
-// [핵심] 판정 로직 - 다사/대실 예외 포함
 function analyze(val, target, station, type, isAir = false) {
     if (station === "문양") return { s: 'ok', c: '' };
-    
-    // [다사, 대실 하부 배기 예외 처리]
-    if (CONFIG.NO_EXHAUST_HA.includes(station) && type === 'exhaust_ha') {
-        return { s: 'ok', c: '' };
-    }
+    if (CONFIG.NO_EXHAUST_HA.includes(station) && type === 'exhaust_ha') return { s: 'ok', c: '' };
 
     const h = parseH(val);
     const diff = Math.abs(h - target);
@@ -118,7 +117,7 @@ function renderAll(hvac, air) {
     };
     document.getElementById('summary-area').innerHTML = `<h2 class="summary-section-main-title">⚠️ 통합 이상 내역 요약</h2><div class="summary-area-grid">${buildSum(b.left)}${buildSum(b.right)}</div>`;
 
-    // 2. 상세 결과 (버튼식 토글 적용)
+    // 2. 상세 결과 (수평 정렬 + 버튼식 토글)
     const lH = hvac.filter(d => b.left.stations.includes(d.name)), rH = hvac.filter(d => b.right.stations.includes(d.name));
     const lA = air.filter(d => b.left.stations.includes(d.name)), rA = air.filter(d => b.right.stations.includes(d.name));
 
@@ -126,18 +125,18 @@ function renderAll(hvac, air) {
         <div class="equipment-row">
             <div class="branch-column">
                 <div class="branch-name-header">${b.left.name}</div>
-                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'left-hvac')">[승강장 공조기] 상세보기</button>
+                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'left-hvac', '승강장공조기')">[승강장공조기] 상세보기 ▾</button>
                 <div id="left-hvac" class="detail-content">${buildHVACTable(lH)}</div>
                 
-                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'left-air')">[공기청정기] 상세보기</button>
+                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'left-air', '공기청정기')">[공기청정기] 상세보기 ▾</button>
                 <div id="left-air" class="detail-content">${buildAirTable(lA)}</div>
             </div>
             <div class="branch-column">
                 <div class="branch-name-header">${b.right.name}</div>
-                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'right-hvac')">[승강장 공조기] 상세보기</button>
+                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'right-hvac', '승강장공조기')">[승강장공조기] 상세보기 ▾</button>
                 <div id="right-hvac" class="detail-content">${buildHVACTable(rH)}</div>
                 
-                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'right-air')">[공기청정기] 상세보기</button>
+                <button class="toggle-detail-btn" onclick="toggleDetail(this, 'right-air', '공기청정기')">[공기청정기] 상세보기 ▾</button>
                 <div id="right-air" class="detail-content">${buildAirTable(rA)}</div>
             </div>
         </div>`;
@@ -148,10 +147,7 @@ function buildHVACTable(data) {
     let h = `<div class="table-wrapper"><table><thead><tr>${hds.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
     data.forEach(d => {
         h += `<tr><td class="st-name">${d.name}</td>`;
-        d.raw.forEach((v, i) => { 
-            const st = d.res[i].s;
-            h += `<td class="${d.res[i].c}">${formatToHMS(v)}</td>`; 
-        });
+        d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${formatToHMS(v)}</td>`; });
         h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'이상':'정상')}</span></td></tr>`;
     });
     return h + `</tbody></table></div>`;
@@ -167,7 +163,6 @@ function buildAirTable(data) {
     return h + `</tbody></table></div>`;
 }
 
-// 추출 로직 (다사·대실 시하/종하 예외 타입 지정을 위해 일부 수정)
 function getL2HVAC(sheet) {
     const range = XLSX.utils.decode_range(sheet['!ref']); const data = []; let cur = null;
     for (let r = 0; r <= range.e.r; r++) {
@@ -191,20 +186,13 @@ function getL2HVAC(sheet) {
 function formatL2HVAC(d) {
     const ty = CONFIG.STATION_MAP_NORMAL[d.name] || "type4"; 
     const tg = isCooling ? (CONFIG.COOLING_TARGETS[CONFIG.STATION_MAP_COOLING[d.name]] || CONFIG.COOLING_TARGETS["type3"]) : CONFIG.NORMAL_TARGETS[ty];
-    const raw = [d.ls, d.lue, d.lle, d.rs, d.rue, d.rle];
-    // 각 위치에 맞는 타입 지정 (시하=index 2, 종하=index 5)
     const res = [
-        analyze(raw[0], tg.s, d.name, 'supply'), 
-        analyze(raw[1], tg.e, d.name, 'exhaust'), 
-        analyze(raw[2], tg.e, d.name, 'exhaust_ha'), 
-        analyze(raw[3], tg.s, d.name, 'supply'), 
-        analyze(raw[4], tg.e, d.name, 'exhaust'), 
-        analyze(raw[5], tg.e, d.name, 'exhaust_ha')
+        analyze(d.ls, tg.s, d.name, 'supply'), analyze(d.lue, tg.e, d.name, 'exhaust'), analyze(d.lle, tg.e, d.name, 'exhaust_ha'), 
+        analyze(d.rs, tg.s, d.name, 'supply'), analyze(d.rue, tg.e, d.name, 'exhaust'), analyze(d.rle, tg.e, d.name, 'exhaust_ha')
     ];
-    return { name: d.name, raw, res, isAb: res.some(r => r.s !== 'ok'), isCri: res.some(r => r.s === 'critical') };
+    return { name: d.name, raw: [d.ls, d.lue, d.lle, d.rs, d.rue, d.rle], res, isAb: res.some(r => r.s !== 'ok'), isCri: res.some(r => r.s === 'critical') };
 }
 
-// 나머지 헬퍼 (L1 추출, 시간 변환 등)는 기존 답변과 동일하게 유지
 function formatToHMS(v) { if(!v||v==='0'||v===0||v==='-') return "0:00:00"; let ts; if(typeof v==='number') ts=Math.round(v*24*3600); else if(typeof v==='string'&&v.includes(':')){ const p=v.split(':'); ts=(parseInt(p[0])||0)*3600+(parseInt(p[1])||0)*60+(parseInt(p[2])||0); } else { const n=parseFloat(v); if(isNaN(n)) return "0:00:00"; ts=Math.round(n*3600); } const h=Math.floor(ts/3600), m=Math.floor((ts%3600)/60), s=ts%60; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
 function getCV(s, r, c) { const cell = s[XLSX.utils.encode_cell({r:r, c:c})]; return cell ? cell.w || cell.v : ""; }
 function parseH(v) { if(!v) return 0; if(typeof v === 'number') return v * 24; const p = String(v).split(':'); return p.length < 2 ? parseFloat(v)||0 : parseInt(p[0]) + parseInt(p[1])/60; }
