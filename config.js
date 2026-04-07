@@ -1,16 +1,15 @@
 const CONFIG = {
     SEASON: { COOLING_START: { month: 7, day: 1 }, COOLING_END: { month: 9, day: 20 } },
-    
-    // [환기실 송풍기 시즌 설정]
     VENT_SEASON: {
-        INTER: [{m:3}, {m:4}, {m:5}, {m:10}], // 중간기
-        SUMMER: [{m:6}, {m:7}, {m:8}, {m:9}], // 하절기
-        WINTER: [{m:11}, {m:12}, {m:1}, {m:2}] // 동절기
+        INTER: [3, 4, 5, 10], 
+        SUMMER: [6, 7, 8, 9], 
+        WINTER: [11, 12, 1, 2]
     },
-
     NORMAL_TARGETS: { "type1": { s: 17, e: 1 }, "type2": { s: 15, e: 1 }, "type3": { s: 15.5, e: 1 }, "type4": { s: 16.5, e: 1 } },
     COOLING_TARGETS: { "type1": { s: 12, e: 0.5 }, "type2": { s: 9, e: 0.5 }, "type3": { s: 9, e: 0.5 } },
     AIR_PURIFIER_STD: 17, AIR_PURIFIER_LIMIT: 14, TOLERANCE: 40 / 60,
+
+    // [수정] 다사, 대실 외에 성서산단 등 장비 없는 곳 확인용
     NO_EXHAUST_HA: ["다사", "대실"],
 
     BRANCHES: {
