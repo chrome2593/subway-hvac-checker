@@ -58,7 +58,6 @@ function analyze(val, target, station, type) {
     if (station === "문양") return { s: 'ok', c: '' };
     const h = parseH(val);
     const diff = Math.abs(h - target);
-
     if (!isCooling) {
         if (type === 'supply') {
             if (diff >= 5) return { s: 'critical', c: 'critical-val' };
@@ -85,7 +84,7 @@ function analyzeVent(val, isRight) {
     return (h === target) ? { s: 'ok', c: '' } : { s: 'warning', c: 'bad-val' };
 }
 
-// --- [추출 엔진] ---
+// --- [추출 엔진 - 환기실] ---
 function getL2Vent(sheet) {
     const data = [];
     const range = XLSX.utils.decode_range(sheet['!ref']);
@@ -98,9 +97,7 @@ function getL2Vent(sheet) {
             return;
         }
         let fRow = -1;
-        for (let r = 0; r <= range.e.r; r++) {
-            if (cleanText(getCV(sheet, r, 0) + getCV(sheet, r, 1)).includes(matchName)) { fRow = r; break; }
-        }
+        for (let r = 0; r <= range.e.r; r++) { if (cleanText(getCV(sheet, r, 0) + getCV(sheet, r, 1)).includes(matchName)) { fRow = r; break; } }
         if (fRow !== -1) {
             let units = [];
             for (let r = fRow; r < fRow + 40 && r <= range.e.r; r++) {
@@ -171,21 +168,30 @@ function renderAll(hvac, air, vent) {
     const lV = vent.filter(d => b.left.stations.includes(d.name)), rV = vent.filter(d => b.right.stations.includes(d.name));
     const lA = air.filter(d => b.left.stations.includes(d.name)), rA = air.filter(d => b.right.stations.includes(d.name));
 
+    // [수정] 분소명 아래로 타이틀 및 버튼 배치
+    const buildColHtml = (br, h, v, a, side) => {
+        return `
+        <div class="branch-column">
+            <div class="branch-name-header">${br.name}</div>
+            
+            <div class="section-title">📊 승강장 공조기 상세 분석</div>
+            <button class="toggle-detail-btn" onclick="toggleDetail(this, '${side}-hvac', '승강장공조기')">[승강장공조기] 상세보기 ▾</button>
+            <div id="${side}-hvac" class="detail-content">${buildHVACTable(h)}</div>
+            
+            <div class="section-title">🌪️ 환기실 송풍기 상세 분석</div>
+            <button class="toggle-detail-btn" onclick="toggleDetail(this, '${side}-vent', '환기실송풍기')">[환기실송풍기] 상세보기 ▾</button>
+            <div id="${side}-vent" class="detail-content">${buildFlexTable(v)}</div>
+            
+            <div class="section-title">🌬️ 공기청정기 상세 분석</div>
+            <button class="toggle-detail-btn" onclick="toggleDetail(this, '${side}-air', '공기청정기')">[공기청정기] 상세보기 ▾</button>
+            <div id="${side}-air" class="detail-content">${buildAirTable(a)}</div>
+        </div>`;
+    };
+
     document.getElementById('full-list-area').innerHTML = `
-        <h2 class="section-title">📊 승강장 공조기 상세 분석</h2>
         <div class="equipment-row">
-            <div class="branch-column"><div class="branch-name-header">${b.left.name}</div><button class="toggle-detail-btn" onclick="toggleDetail(this, 'l-hvac', '승강장공조기')">[승강장공조기] 상세보기 ▾</button><div id="l-hvac" class="detail-content">${buildHVACTable(lH)}</div></div>
-            <div class="branch-column"><div class="branch-name-header">${b.right.name}</div><button class="toggle-detail-btn" onclick="toggleDetail(this, 'r-hvac', '승강장공조기')">[승강장공조기] 상세보기 ▾</button><div id="r-hvac" class="detail-content">${buildHVACTable(rH)}</div></div>
-        </div>
-        <h2 class="section-title">🌪️ 환기실 송풍기 상세 분석</h2>
-        <div class="equipment-row">
-            <div class="branch-column"><button class="toggle-detail-btn" onclick="toggleDetail(this, 'l-vent', '환기실송풍기')">[환기실송풍기] 상세보기 ▾</button><div id="l-vent" class="detail-content">${buildFlexTable(lV)}</div></div>
-            <div class="branch-column"><button class="toggle-detail-btn" onclick="toggleDetail(this, 'r-vent', '환기실송풍기')">[환기실송풍기] 상세보기 ▾</button><div id="r-vent" class="detail-content">${buildFlexTable(rV)}</div></div>
-        </div>
-        <h2 class="section-title">🌬️ 공기청정기 상세 분석</h2>
-        <div class="equipment-row">
-            <div class="branch-column"><button class="toggle-detail-btn" onclick="toggleDetail(this, 'l-air', '공기청정기')">[공기청정기] 상세보기 ▾</button><div id="l-air" class="detail-content">${buildAirTable(lA)}</div></div>
-            <div class="branch-column"><button class="toggle-detail-btn" onclick="toggleDetail(this, 'r-air', '공기청정기')">[공기청정기] 상세보기 ▾</button><div id="r-air" class="detail-content">${buildAirTable(rA)}</div></div>
+            ${buildColHtml(b.left, lH, lV, lA, 'l')}
+            ${buildColHtml(b.right, rH, rV, rA, 'r')}
         </div>`;
 }
 
@@ -194,6 +200,7 @@ function buildHVACTable(data) {
     let h = `<div class="table-wrapper"><table><thead><tr>${hds.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
     data.forEach(d => {
         h += `<tr><td class="st-name">${d.name}</td>`;
+        // [수정] 추출된 판정 res를 그대로 사용 (중복 판정 오류 해결)
         d.raw.forEach((v, i) => { h += `<td class="${d.res[i].c}">${v==="N/A"?"-":formatToHMS(v)}</td>`; });
         h += `<td><span class="badge badge-${d.isCri?'danger':(d.isAb?'warning':'success')}">${d.isCri?'심각':(d.isAb?'확인':'정상')}</span></td></tr>`;
     });
@@ -221,6 +228,7 @@ function buildAirTable(data) {
     return h + `</tbody></table></div>`;
 }
 
+// 헬퍼
 function formatToHMS(v) { if(!v||v==='0'||v===0||v==='-'||v==="N/A") return "0:00:00"; let ts; if(typeof v==='number') ts=Math.round(v*24*3600); else if(typeof v==='string'&&v.includes(':')){ const p=v.split(':'); ts=(parseInt(p[0])||0)*3600+(parseInt(p[1])||0)*60+(parseInt(p[2])||0); } else { const n=parseFloat(v); if(isNaN(n)) return "0:00:00"; ts=Math.round(n*3600); } const h=Math.floor(ts/3600), m=Math.floor((ts%3600)/60), s=ts%60; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
 function getCV(s, r, c) { const cell = s[XLSX.utils.encode_cell({r:r, c:c})]; return cell ? cell.w || cell.v : ""; }
 function parseH(v) { if(!v||v==="N/A") return 0; if(typeof v === 'number') return v * 24; const p = String(v).split(':'); if(p.length < 2) return parseFloat(v)||0; return parseInt(p[0]) + (parseInt(p[1])||0)/60 + (parseInt(p[2])||0)/3600; }
